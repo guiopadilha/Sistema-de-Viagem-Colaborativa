@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TravelTogether - Planeje Viagens Inesquecíveis</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans text-gray-800">
+  <!-- HEADER -->
+  <header class="w-full bg-white shadow-sm fixed top-0 left-0 z-50">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-2">
+        <div class="p-2 rounded-xl bg-blue-100 text-blue-600">✈️</div>
+        <span class="text-xl font-bold text-gray-800">TravelTogether</span>
+      </div>
+      <nav class="hidden md:flex gap-6 text-gray-600 font-medium">
+        <a href="#features" class="hover:text-blue-600">Funcionalidades</a>
+        <a href="#testimonials" class="hover:text-blue-600">Depoimentos</a>
+        <a href="#pricing" class="hover:text-blue-600">Planos</a>
+      </nav>
+      <div class="flex gap-3">
+        <button id="login-btn" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">Entrar</button>
+        <button class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium shadow hover:opacity-90">
+          Cadastre-se
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="relative bg-gradient-to-r from-blue-50 to-green-50 pt-28 pb-20">
+    <div class="max-w-6xl mx-auto px-6 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+        Organize sua viagem de forma colaborativa
+      </h1>
+      <p class="text-lg text-gray-600 mb-6">
+        Roteiros colaborativos, controle de gastos e decisões em conjunto. Tudo em um só lugar.
+      </p>
+      <button class="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium text-lg shadow hover:opacity-90">
+        Comece agora
+      </button>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="py-20 bg-white">
+    <div class="max-w-6xl mx-auto px-6">
+      <h2 class="text-3xl font-bold text-gray-800 text-center mb-12">
+        A ferramenta completa para sua próxima aventura
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="p-6 rounded-xl bg-blue-50 shadow-sm text-center">
+          <div class="text-3xl mb-3">🗺️</div>
+          <h3 class="font-semibold text-lg text-gray-800 mb-2">Roteiros Colaborativos</h3>
+          <p class="text-gray-600 text-sm">Crie e edite o itinerário da viagem em tempo real com todos os participantes.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-yellow-50 shadow-sm text-center">
+          <div class="text-3xl mb-3">🗳️</div>
+          <h3 class="font-semibold text-lg text-gray-800 mb-2">Enquetes para Decisões</h3>
+          <p class="text-gray-600 text-sm">Decidam juntos sobre hotéis, restaurantes e passeios de forma democrática.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-green-50 shadow-sm text-center">
+          <div class="text-3xl mb-3">💰</div>
+          <h3 class="font-semibold text-lg text-gray-800 mb-2">Controle de Gastos</h3>
+          <p class="text-gray-600 text-sm">Adicione despesas e veja quem pagou o quê. O app calcula a divisão para você.</p>
+        </div>
+        <div class="p-6 rounded-xl bg-purple-50 shadow-sm text-center">
+          <div class="text-3xl mb-3">✅</div>
+          <h3 class="font-semibold text-lg text-gray-800 mb-2">Lista de Tarefas</h3>
+          <p class="text-gray-600 text-sm">Organize as pendências como compra de passagens e reserva de carro. Nada será esquecido.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-gray-100 py-6">
+    <div class="max-w-6xl mx-auto px-6 text-center text-gray-500 text-sm">
+      &copy; 2025 TravelTogether. Todos os direitos reservados.
+    </div>
+  </footer>
+
+  <!-- MODAL LOGIN / CADASTRO -->
+  <div id="auth-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl w-full max-w-md p-6 relative shadow-lg">
+      <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">&times;</button>
+      <div class="flex border-b mb-4">
+        <button data-form="login" class="flex-1 py-2 font-medium text-blue-600 border-b-2 border-blue-600">Login</button>
+        <button data-form="signup" class="flex-1 py-2 font-medium text-gray-500 hover:text-gray-700">Cadastro</button>
+      </div>
+      <!-- LOGIN FORM -->
+      <form id="login-form" class="space-y-4">
+        <div>
+          <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" id="login-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+        </div>
+        <div>
+          <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
+          <input type="password" id="login-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Sua senha" required>
+        </div>
+        <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Entrar</button>
+      </form>
+      <!-- SIGNUP FORM -->
+      <form id="signup-form" class="space-y-4 hidden">
+        <div>
+          <label for="signup-name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
+          <input type="text" id="signup-name" class="w-full mt-1 p-2 border rounded-lg" placeholder="Seu nome completo" required>
+        </div>
+        <div>
+          <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
+          <input type="email" id="signup-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+        </div>
+        <div>
+          <label for="signup-password" class="block text-sm font-medium text-gray-700">Senha</label>
+          <input type="password" id="signup-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Crie uma senha forte" required>
+        </div>
+        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Criar Conta</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    const loginBtn = document.getElementById("login-btn");
+    const modal = document.getElementById("auth-modal");
+    const closeBtn = document.getElementById("modal-close-btn");
+    const loginForm = document.getElementById("login-form");
+    const signupForm = document.getElementById("signup-form");
+    const formTabs = document.querySelectorAll("[data-form]");
+
+    loginBtn.addEventListener("click", () => modal.classList.remove("hidden"));
+    closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
+
+    formTabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        if (tab.dataset.form === "login") {
+          loginForm.classList.remove("hidden");
+          signupForm.classList.add("hidden");
+          tab.classList.add("text-blue-600", "border-b-2", "border-blue-600");
+          formTabs[1].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
+        } else {
+          loginForm.classList.add("hidden");
+          signupForm.classList.remove("hidden");
+          tab.classList.add("text-blue-600", "border-b-2", "border-blue-600");
+          formTabs[0].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
