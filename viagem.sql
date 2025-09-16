@@ -8,11 +8,9 @@ USE viagens_colegas;
 CREATE TABLE usuarios (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    cpf CHAR(11) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     senha VARCHAR(255) NOT NULL,
     telefone VARCHAR(20),
-    perfil VARCHAR(50), -- pode ser: admin, viajante, organizador
     data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -170,3 +168,6 @@ CREATE TABLE alimentacoes (
     data DATE,
     FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
 );
+
+
+--------------------------------------
