@@ -21,7 +21,7 @@
       </nav>
       <div class="flex gap-3">
         <button id="login-btn" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">Entrar</button>
-        <button class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium shadow hover:opacity-90">
+        <button id="signup-btn" class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium shadow hover:opacity-90">
           Cadastre-se
         </button>
       </div>
@@ -37,7 +37,7 @@
       <p class="text-lg text-gray-600 mb-6">
         Roteiros colaborativos, controle de gastos e decisões em conjunto. Tudo em um só lugar.
       </p>
-      <button class="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium text-lg shadow hover:opacity-90">
+      <button id="hero-signup-btn" class="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium text-lg shadow hover:opacity-90">
         Comece agora
       </button>
     </div>
@@ -85,35 +85,59 @@
   <div id="auth-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div class="bg-white rounded-xl w-full max-w-md p-6 relative shadow-lg">
       <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">&times;</button>
+
+      <!-- FLASH MESSAGES -->
+      <div id="flash-messages" class="mb-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="p-2 rounded mb-2 {{ 'bg-green-200 text-green-800' if category=='success' else 'bg-red-200 text-red-800' }}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+      </div>
+
       <div class="flex border-b mb-4">
         <button data-form="login" class="flex-1 py-2 font-medium text-blue-600 border-b-2 border-blue-600">Login</button>
         <button data-form="signup" class="flex-1 py-2 font-medium text-gray-500 hover:text-gray-700">Cadastro</button>
       </div>
+
       <!-- LOGIN FORM -->
-      <form id="login-form" class="space-y-4">
+      <form id="login-form" class="space-y-4" method="POST" action="/login">
         <div>
           <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="login-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+          <input type="email" id="login-email" name="login-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
         </div>
         <div>
           <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
-          <input type="password" id="login-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Sua senha" required>
+          <input type="password" id="login-password" name="login-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Sua senha" required>
         </div>
         <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Entrar</button>
       </form>
+
       <!-- SIGNUP FORM -->
-      <form id="signup-form" class="space-y-4 hidden">
+      <form id="signup-form" class="space-y-4 hidden" method="POST" action="/signup">
         <div>
           <label for="signup-name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
-          <input type="text" id="signup-name" class="w-full mt-1 p-2 border rounded-lg" placeholder="Seu nome completo" required>
+          <input type="text" id="signup-name" name="signup-name" class="w-full mt-1 p-2 border rounded-lg" placeholder="Seu nome completo" required>
         </div>
         <div>
           <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="signup-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+          <input type="email" id="signup-email" name="signup-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+        </div>
+        <div>
+          <label for="signup-phone" class="block text-sm font-medium text-gray-700">Telefone</label>
+          <input type="tel" id="signup-phone" name="signup-phone" class="w-full mt-1 p-2 border rounded-lg" placeholder="(00) 00000-0000" required>
         </div>
         <div>
           <label for="signup-password" class="block text-sm font-medium text-gray-700">Senha</label>
-          <input type="password" id="signup-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Crie uma senha forte" required>
+          <input type="password" id="signup-password" name="signup-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Crie uma senha forte" required>
+        </div>
+        <div>
+          <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700">Confirme sua Senha</label>
+          <input type="password" id="signup-confirm-password" name="signup-confirm-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Repita a senha" required>
         </div>
         <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Criar Conta</button>
       </form>
@@ -123,15 +147,37 @@
   <!-- SCRIPT -->
   <script>
     const loginBtn = document.getElementById("login-btn");
+    const signupBtn = document.getElementById("signup-btn");
+    const heroSignupBtn = document.getElementById("hero-signup-btn");
     const modal = document.getElementById("auth-modal");
     const closeBtn = document.getElementById("modal-close-btn");
     const loginForm = document.getElementById("login-form");
     const signupForm = document.getElementById("signup-form");
     const formTabs = document.querySelectorAll("[data-form]");
 
-    loginBtn.addEventListener("click", () => modal.classList.remove("hidden"));
+    // Abrir modal
+    loginBtn.addEventListener("click", () => {
+      modal.classList.remove("hidden");
+      loginForm.classList.remove("hidden");
+      signupForm.classList.add("hidden");
+      formTabs[0].classList.add("text-blue-600", "border-b-2", "border-blue-600");
+      formTabs[1].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
+    });
+
+    signupBtn.addEventListener("click", () => {
+      modal.classList.remove("hidden");
+      signupForm.classList.remove("hidden");
+      loginForm.classList.add("hidden");
+      formTabs[1].classList.add("text-blue-600", "border-b-2", "border-blue-600");
+      formTabs[0].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
+    });
+
+    heroSignupBtn.addEventListener("click", () => signupBtn.click());
+
+    // Fechar modal
     closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
+    // Alternar entre login e cadastro
     formTabs.forEach(tab => {
       tab.addEventListener("click", () => {
         if (tab.dataset.form === "login") {
