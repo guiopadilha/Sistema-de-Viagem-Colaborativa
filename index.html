@@ -8,138 +8,143 @@
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
   <!-- HEADER -->
-  <header class="w-full bg-white shadow-sm fixed top-0 left-0 z-50">
-    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-      <div class="flex items-center gap-2">
-        <div class="p-2 rounded-xl bg-blue-100 text-blue-600">✈️</div>
-        <span class="text-xl font-bold text-gray-800">TravelTogether</span>
+  <header class="w-full bg-white/90 backdrop-blur-md shadow-md fixed top-0 left-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="p-2 rounded-2xl bg-gradient-to-r from-blue-500 to-green-500 text-white text-lg shadow">✈️</div>
+        <span class="text-xl sm:text-2xl font-extrabold text-gray-800 tracking-tight">TravelTogether</span>
       </div>
-      <nav class="hidden md:flex gap-6 text-gray-600 font-medium">
-        <a href="#features" class="hover:text-blue-600">Funcionalidades</a>
-        <a href="#testimonials" class="hover:text-blue-600">Depoimentos</a>
-        <a href="#pricing" class="hover:text-blue-600">Planos</a>
+
+      <!-- Desktop Menu -->
+      <nav class="hidden md:flex gap-6 lg:gap-8 text-gray-600 font-medium">
+        <a href="#features" class="hover:text-blue-600 transition">Funcionalidades</a>
+        <a href="#testimonials" class="hover:text-blue-600 transition">Depoimentos</a>
+        <a href="#pricing" class="hover:text-blue-600 transition">Planos</a>
       </nav>
-      <div class="flex gap-3">
-        <button id="login-btn" class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100">Entrar</button>
-        <button id="signup-btn" class="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium shadow hover:opacity-90">
+
+      <!-- Buttons Desktop -->
+      <div class="hidden md:flex gap-2 sm:gap-3">
+        <button id="login-btn" class="px-3 sm:px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition shadow-sm">Entrar</button>
+        <button id="signup-btn" class="px-4 sm:px-5 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium shadow-lg hover:scale-105 transition">
           Cadastre-se
         </button>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <button id="mobile-menu-btn" class="md:hidden text-2xl text-gray-700">&#9776;</button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden flex-col items-center gap-3 bg-white shadow-md p-4 md:hidden">
+      <a href="#features" class="text-gray-600 font-medium hover:text-blue-600">Funcionalidades</a>
+      <a href="#testimonials" class="text-gray-600 font-medium hover:text-blue-600">Depoimentos</a>
+      <a href="#pricing" class="text-gray-600 font-medium hover:text-blue-600">Planos</a>
+      <div class="flex flex-col gap-2 w-full">
+        <button id="login-btn-mobile" class="w-full px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition shadow-sm">Entrar</button>
+        <button id="signup-btn-mobile" class="w-full px-5 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium shadow-lg">Cadastre-se</button>
       </div>
     </div>
   </header>
 
   <!-- HERO -->
-  <section class="relative bg-gradient-to-r from-blue-50 to-green-50 pt-28 pb-20">
-    <div class="max-w-6xl mx-auto px-6 text-center">
-      <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-        Organize sua viagem de forma colaborativa
+  <section class="relative bg-gradient-to-r from-blue-50 to-green-50 pt-32 pb-24 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto text-center">
+      <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-gray-800 mb-6 leading-tight">
+        Organize sua viagem de forma <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-green-500">colaborativa</span>
       </h1>
-      <p class="text-lg text-gray-600 mb-6">
-        Roteiros colaborativos, controle de gastos e decisões em conjunto. Tudo em um só lugar.
+      <p class="text-base sm:text-lg md:text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+        Roteiros compartilhados, controle de gastos e decisões em grupo. Tudo em um só lugar, simples e eficiente.
       </p>
-      <button id="hero-signup-btn" class="px-6 py-3 rounded-lg bg-gradient-to-r from-blue-500 to-green-500 text-white font-medium text-lg shadow hover:opacity-90">
+      <button id="hero-signup-btn" class="px-6 sm:px-8 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-green-500 text-white font-semibold text-lg shadow-lg hover:scale-105 transition">
         Comece agora
       </button>
     </div>
   </section>
 
   <!-- FEATURES -->
-  <section id="features" class="py-20 bg-white">
-    <div class="max-w-6xl mx-auto px-6">
-      <h2 class="text-3xl font-bold text-gray-800 text-center mb-12">
+  <section id="features" class="py-16 sm:py-20 bg-white px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 text-center mb-12 sm:mb-16">
         A ferramenta completa para sua próxima aventura
       </h2>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="p-6 rounded-xl bg-blue-50 shadow-sm text-center">
-          <div class="text-3xl mb-3">🗺️</div>
-          <h3 class="font-semibold text-lg text-gray-800 mb-2">Roteiros Colaborativos</h3>
-          <p class="text-gray-600 text-sm">Crie e edite o itinerário da viagem em tempo real com todos os participantes.</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+        <div class="p-6 rounded-2xl bg-blue-50 shadow hover:shadow-md transition text-center">
+          <div class="text-3xl sm:text-4xl mb-4">🗺️</div>
+          <h3 class="font-semibold text-lg sm:text-xl text-gray-800 mb-2">Roteiros Colaborativos</h3>
+          <p class="text-gray-600 text-sm sm:text-base">Crie e edite o itinerário da viagem em tempo real com todos os participantes.</p>
         </div>
-        <div class="p-6 rounded-xl bg-yellow-50 shadow-sm text-center">
-          <div class="text-3xl mb-3">🗳️</div>
-          <h3 class="font-semibold text-lg text-gray-800 mb-2">Enquetes para Decisões</h3>
-          <p class="text-gray-600 text-sm">Decidam juntos sobre hotéis, restaurantes e passeios de forma democrática.</p>
+        <div class="p-6 rounded-2xl bg-yellow-50 shadow hover:shadow-md transition text-center">
+          <div class="text-3xl sm:text-4xl mb-4">🗳️</div>
+          <h3 class="font-semibold text-lg sm:text-xl text-gray-800 mb-2">Enquetes para Decisões</h3>
+          <p class="text-gray-600 text-sm sm:text-base">Decidam juntos sobre hotéis, restaurantes e passeios de forma democrática.</p>
         </div>
-        <div class="p-6 rounded-xl bg-green-50 shadow-sm text-center">
-          <div class="text-3xl mb-3">💰</div>
-          <h3 class="font-semibold text-lg text-gray-800 mb-2">Controle de Gastos</h3>
-          <p class="text-gray-600 text-sm">Adicione despesas e veja quem pagou o quê. O app calcula a divisão para você.</p>
+        <div class="p-6 rounded-2xl bg-green-50 shadow hover:shadow-md transition text-center">
+          <div class="text-3xl sm:text-4xl mb-4">💰</div>
+          <h3 class="font-semibold text-lg sm:text-xl text-gray-800 mb-2">Controle de Gastos</h3>
+          <p class="text-gray-600 text-sm sm:text-base">Adicione despesas e veja quem pagou o quê. O app calcula a divisão para você.</p>
         </div>
-        <div class="p-6 rounded-xl bg-purple-50 shadow-sm text-center">
-          <div class="text-3xl mb-3">✅</div>
-          <h3 class="font-semibold text-lg text-gray-800 mb-2">Lista de Tarefas</h3>
-          <p class="text-gray-600 text-sm">Organize as pendências como compra de passagens e reserva de carro. Nada será esquecido.</p>
+        <div class="p-6 rounded-2xl bg-purple-50 shadow hover:shadow-md transition text-center">
+          <div class="text-3xl sm:text-4xl mb-4">✅</div>
+          <h3 class="font-semibold text-lg sm:text-xl text-gray-800 mb-2">Lista de Tarefas</h3>
+          <p class="text-gray-600 text-sm sm:text-base">Organize as pendências como compra de passagens e reserva de carro. Nada será esquecido.</p>
         </div>
       </div>
     </div>
   </section>
 
   <!-- FOOTER -->
-  <footer class="bg-gray-100 py-6">
-    <div class="max-w-6xl mx-auto px-6 text-center text-gray-500 text-sm">
-      &copy; 2025 TravelTogether. Todos os direitos reservados.
+  <footer class="bg-gray-100 py-6 sm:py-8 mt-12 border-t border-gray-200 px-4 sm:px-6">
+    <div class="max-w-6xl mx-auto text-center text-gray-500 text-sm">
+      &copy; 2025 <span class="font-semibold text-gray-700">TravelTogether</span>. Todos os direitos reservados.
     </div>
   </footer>
 
   <!-- MODAL LOGIN / CADASTRO -->
   <div id="auth-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-xl w-full max-w-md p-6 relative shadow-lg">
-      <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">&times;</button>
+    <div class="bg-white rounded-2xl w-full max-w-sm md:max-w-md p-6 sm:p-8 relative shadow-xl animate-fadeIn">
+      <button id="modal-close-btn" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
 
-      <!-- FLASH MESSAGES -->
-      <div id="flash-messages" class="mb-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="p-2 rounded mb-2 {{ 'bg-green-200 text-green-800' if category=='success' else 'bg-red-200 text-red-800' }}">
-                {{ message }}
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-      </div>
-
-      <div class="flex border-b mb-4">
+      <div class="flex border-b mb-6">
         <button data-form="login" class="flex-1 py-2 font-medium text-blue-600 border-b-2 border-blue-600">Login</button>
         <button data-form="signup" class="flex-1 py-2 font-medium text-gray-500 hover:text-gray-700">Cadastro</button>
       </div>
 
       <!-- LOGIN FORM -->
-      <form id="login-form" class="space-y-4" method="POST" action="/login">
+      <form id="login-form" class="space-y-4 sm:space-y-5" method="POST" action="/login">
         <div>
           <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="login-email" name="login-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+          <input type="email" id="login-email" name="login-email" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="seu@email.com" required>
         </div>
         <div>
           <label for="login-password" class="block text-sm font-medium text-gray-700">Senha</label>
-          <input type="password" id="login-password" name="login-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Sua senha" required>
+          <input type="password" id="login-password" name="login-password" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="Sua senha" required>
         </div>
-        <button type="submit" class="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Entrar</button>
+        <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">Entrar</button>
       </form>
 
       <!-- SIGNUP FORM -->
-      <form id="signup-form" class="space-y-4 hidden" method="POST" action="/signup">
+      <form id="signup-form" class="space-y-4 sm:space-y-5 hidden" method="POST" action="/signup" novalidate>
         <div>
           <label for="signup-name" class="block text-sm font-medium text-gray-700">Nome Completo</label>
-          <input type="text" id="signup-name" name="signup-name" class="w-full mt-1 p-2 border rounded-lg" placeholder="Seu nome completo" required>
+          <input type="text" id="signup-name" name="signup-name" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Seu nome completo" required>
         </div>
         <div>
           <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
-          <input type="email" id="signup-email" name="signup-email" class="w-full mt-1 p-2 border rounded-lg" placeholder="seu@email.com" required>
+          <input type="email" id="signup-email" name="signup-email" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="seu@email.com" required>
         </div>
         <div>
           <label for="signup-phone" class="block text-sm font-medium text-gray-700">Telefone</label>
-          <input type="tel" id="signup-phone" name="signup-phone" class="w-full mt-1 p-2 border rounded-lg" placeholder="(00) 00000-0000" required>
+          <input type="tel" id="signup-phone" name="signup-phone" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="(00) 00000-0000" maxlength="15" inputmode="numeric" required>
         </div>
         <div>
           <label for="signup-password" class="block text-sm font-medium text-gray-700">Senha</label>
-          <input type="password" id="signup-password" name="signup-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Crie uma senha forte" required>
+          <input type="password" id="signup-password" name="signup-password" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Crie uma senha forte" required>
         </div>
         <div>
           <label for="signup-confirm-password" class="block text-sm font-medium text-gray-700">Confirme sua Senha</label>
-          <input type="password" id="signup-confirm-password" name="signup-confirm-password" class="w-full mt-1 p-2 border rounded-lg" placeholder="Repita a senha" required>
+          <input type="password" id="signup-confirm-password" name="signup-confirm-password" class="w-full mt-1 p-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:outline-none" placeholder="Repita a senha" required>
         </div>
-        <button type="submit" class="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">Criar Conta</button>
+        <button type="submit" class="w-full py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition">Criar Conta</button>
       </form>
     </div>
   </div>
@@ -154,25 +159,26 @@
     const loginForm = document.getElementById("login-form");
     const signupForm = document.getElementById("signup-form");
     const formTabs = document.querySelectorAll("[data-form]");
+    const phoneInput = document.getElementById("signup-phone");
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const mobileMenu = document.getElementById("mobile-menu");
+    const loginBtnMobile = document.getElementById("login-btn-mobile");
+    const signupBtnMobile = document.getElementById("signup-btn-mobile");
 
     // Abrir modal
     loginBtn.addEventListener("click", () => {
       modal.classList.remove("hidden");
       loginForm.classList.remove("hidden");
       signupForm.classList.add("hidden");
-      formTabs[0].classList.add("text-blue-600", "border-b-2", "border-blue-600");
-      formTabs[1].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
     });
-
     signupBtn.addEventListener("click", () => {
       modal.classList.remove("hidden");
       signupForm.classList.remove("hidden");
       loginForm.classList.add("hidden");
-      formTabs[1].classList.add("text-blue-600", "border-b-2", "border-blue-600");
-      formTabs[0].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
     });
-
     heroSignupBtn.addEventListener("click", () => signupBtn.click());
+    loginBtnMobile.addEventListener("click", () => loginBtn.click());
+    signupBtnMobile.addEventListener("click", () => signupBtn.click());
 
     // Fechar modal
     closeBtn.addEventListener("click", () => modal.classList.add("hidden"));
@@ -183,15 +189,45 @@
         if (tab.dataset.form === "login") {
           loginForm.classList.remove("hidden");
           signupForm.classList.add("hidden");
-          tab.classList.add("text-blue-600", "border-b-2", "border-blue-600");
-          formTabs[1].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
         } else {
           loginForm.classList.add("hidden");
           signupForm.classList.remove("hidden");
-          tab.classList.add("text-blue-600", "border-b-2", "border-blue-600");
-          formTabs[0].classList.remove("text-blue-600", "border-b-2", "border-blue-600");
         }
       });
+    });
+
+    // Menu Mobile
+    mobileMenuBtn.addEventListener("click", () => {
+      mobileMenu.classList.toggle("hidden");
+    });
+
+    // Máscara automática de telefone
+    phoneInput.addEventListener("input", function(e) {
+      let value = e.target.value.replace(/\D/g, "");
+      if (value.length > 11) value = value.slice(0, 11);
+      if (value.length <= 10) {
+        e.target.value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+      } else {
+        e.target.value = value.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+      }
+    });
+
+    // Validação com pop-up
+    signupForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+      const name = document.getElementById("signup-name").value.trim();
+      const email = document.getElementById("signup-email");
+      const phone = phoneInput.value.replace(/\D/g, "");
+      const password = document.getElementById("signup-password").value;
+      const confirmPassword = document.getElementById("signup-confirm-password").value;
+
+      if (!name) { alert("Por favor, preencha seu nome completo."); return; }
+      if (!email.checkValidity()) { alert("Digite um email válido."); return; }
+      if (phone.length !== 11) { alert("O telefone deve ter 11 dígitos (DDD + número)."); return; }
+      if (password.length < 6) { alert("A senha deve ter pelo menos 6 caracteres."); return; }
+      if (password !== confirmPassword) { alert("As senhas não coincidem."); return; }
+      alert("Cadastro realizado com sucesso!");
+      signupForm.submit();
     });
   </script>
 </body>
