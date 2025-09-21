@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TravelTogether Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-50 font-sans">
 
-  <!-- Verificação de login -->
- 
   <div class="flex min-h-screen">
     
     <!-- Sidebar -->
@@ -36,7 +35,7 @@
           <h2 class="text-gray-500 text-sm mb-3 font-semibold">RESUMO RÁPIDO</h2>
           <ul class="space-y-2">
             <li class="flex justify-between text-gray-700">
-              <span>Salas Ativas</span><span class="bg-blue-100 text-blue-600 px-2 rounded-full">3</span>
+              <span>Salas Ativas</span><span id="active-rooms-count" class="bg-blue-100 text-blue-600 px-2 rounded-full">0</span>
             </li>
             <li class="flex justify-between text-gray-700">
               <span>Tarefas Pendentes</span><span class="bg-yellow-100 text-yellow-600 px-2 rounded-full">7</span>
@@ -82,7 +81,7 @@
             <h2 class="text-2xl font-bold text-gray-800">Bem-vindo de volta, <span id="userName"></span>!</h2>
             <p class="text-gray-500">Suas aventuras estão esperando por você ✈️</p>
           </div>
-          <button class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md shadow">
+          <button onclick="openCreateTripModal()" class="w-full md:w-auto bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md shadow">
             + Nova Viagem
           </button>
         </div>
@@ -112,14 +111,17 @@
         </div>
 
         <!-- Próximas Viagens -->
-        <div class="bg-white p-6 rounded-lg shadow">
+        <div class="bg-white p-6 rounded-lg shadow mb-4">
           <h3 class="font-semibold text-gray-800 mb-4">Próximas Viagens</h3>
-          <div class="flex flex-wrap justify-between items-center border-t pt-4">
-            <div>
-              <h4 class="font-medium text-gray-800">Teste</h4>
-              <p class="text-sm text-gray-500">📍 Bali &nbsp; 📅 10 set</p>
+          <div id="trips-container">
+            <!-- Cards de viagem serão adicionados aqui dinamicamente -->
+            <div class="flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card">
+              <div>
+                <h4 class="font-medium text-gray-800">Teste</h4>
+                <p class="text-sm text-gray-500">📍 Bali &nbsp; 📅 10 set</p>
+              </div>
+              <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
             </div>
-            <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
           </div>
         </div>
       </section>
@@ -141,44 +143,106 @@
           </div>
         </div>
 
-        <!-- Card de Sala -->
-        <div class="bg-white p-6 rounded-lg shadow w-full md:w-80">
-          <h3 class="font-semibold text-gray-800 mb-2">Teste</h3>
-          <div class="flex flex-wrap space-x-2 mb-2">
-            <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs">Planejando</span>
-            <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">Admin</span>
+        <!-- Container de Salas -->
+        <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- As salas serão adicionadas aqui dinamicamente -->
+          <div class="bg-white p-6 rounded-lg shadow room-card hidden">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-gray-800 room-name">Teste</h3>
+              <button class="text-gray-400 hover:text-red-500 delete-room">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="flex flex-wrap space-x-2 mb-2 room-tags">
+              <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs room-status">Planejando</span>
+              <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs room-role">Admin</span>
+            </div>
+            <p class="text-gray-600 mb-1 room-destination">📍 Bali</p>
+            <p class="text-gray-600 mb-1 room-dates">📅 10 set 2025 - 23 set</p>
+            <p class="text-gray-600 mb-2 room-participants">👥 1 participante</p>
+            <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
+              Orçamento: R$ 5.000
+            </div>
+            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
+              Entrar na Sala
+            </button>
           </div>
-          <p class="text-gray-600 mb-1">📍 Bali</p>
-          <p class="text-gray-600 mb-1">📅 10 set 2025 - 23 set</p>
-          <p class="text-gray-600 mb-2">👥 1 participante</p>
-          <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm">
-            Orçamento: R$ 5.000
-          </div>
-          <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md">
-            Entrar na Sala
+        </div>
+
+        <!-- Mensagem quando não há salas -->
+        <div id="no-rooms-message" class="bg-white p-8 rounded-lg shadow text-center">
+          <div class="text-5xl text-gray-300 mb-4">🏕️</div>
+          <h3 class="text-lg font-medium text-gray-600 mb-2">Você ainda não tem salas de viagem</h3>
+          <p class="text-gray-500 mb-4">Crie sua primeira sala para começar a planejar sua próxima aventura!</p>
+          <button onclick="openCreateModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
+            Criar Primeira Sala
           </button>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- MODAIS (mesmos que já existiam) -->
+  <!-- MODAL PARA CRIAR NOVA SALA -->
   <div id="modal-create" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
       <button onclick="closeCreateModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
       <h2 class="text-lg font-bold text-gray-800 mb-4">Criar Nova Sala de Viagem</h2>
-      <form class="space-y-4">
-        <input type="text" placeholder="Ex: Férias em Bali" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
-        <input type="text" placeholder="Ex: Bali, Indonésia" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input type="date" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
-          <input type="date" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
+      <form id="create-room-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Sala</label>
+          <input type="text" placeholder="Ex: Férias em Bali" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
         </div>
-        <input type="number" placeholder="Orçamento (R$)" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
-        <textarea placeholder="Descreva sua viagem..." class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"></textarea>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Destino</label>
+          <input type="text" placeholder="Ex: Bali, Indonésia" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+            <input type="date" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Término</label>
+            <input type="date" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Orçamento (R$)</label>
+          <input type="number" placeholder="5000" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+          <textarea placeholder="Descreva sua viagem..." class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
         <div class="flex justify-end space-x-3 pt-2">
           <button type="button" onclick="closeCreateModal()" class="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100">Cancelar</button>
           <button type="submit" class="px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600">Criar Sala</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal para criar nova viagem -->
+  <div id="modal-trip" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+      <button onclick="closeCreateTripModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Nova Viagem</h2>
+      <form id="trip-form" class="space-y-4">
+        <input type="text" id="trip-name" placeholder="Nome da viagem" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        <input type="text" id="trip-destination" placeholder="Destino" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <input type="date" id="trip-start" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+          <input type="date" id="trip-end" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <select id="trip-status" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
+          <option value="Planejando">Planejando</option>
+          <option value="Confirmada">Confirmada</option>
+          <option value="Em andamento">Em andamento</option>
+          <option value="Concluída">Concluída</option>
+        </select>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeCreateTripModal()" class="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600">Criar Viagem</button>
         </div>
       </form>
     </div>
@@ -200,6 +264,20 @@
 
   <!-- SCRIPTS -->
   <script>
+    // Dados do usuário (simulado)
+    const user = {
+      name: "Viajante",
+      email: "viajante@example.com"
+    };
+
+    // Array para armazenar as viagens
+    let trips = [
+      { name: "Teste", destination: "Bali", date: "10 set", status: "Planejando" }
+    ];
+
+    // Array para armazenar as salas
+    let rooms = [];
+
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('-translate-x-full');
       document.getElementById('overlay').classList.toggle('hidden');
@@ -228,21 +306,227 @@
       }
     }
 
-    function openCreateModal() { document.getElementById('modal-create').classList.remove('hidden'); }
-    function closeCreateModal() { document.getElementById('modal-create').classList.add('hidden'); }
-    function openEnterModal() { document.getElementById('modal-enter').classList.remove('hidden'); }
-    function closeEnterModal() { document.getElementById('modal-enter').classList.add('hidden'); }
+    function openCreateModal() { 
+      document.getElementById('modal-create').classList.remove('hidden'); 
+    }
+    
+    function closeCreateModal() { 
+      document.getElementById('modal-create').classList.add('hidden'); 
+    }
+    
+    function openEnterModal() { 
+      document.getElementById('modal-enter').classList.remove('hidden'); 
+    }
+    
+    function closeEnterModal() { 
+      document.getElementById('modal-enter').classList.add('hidden'); 
+    }
+
+    // Funções para o modal de nova viagem
+    function openCreateTripModal() { 
+      document.getElementById('modal-trip').classList.remove('hidden'); 
+    }
+    
+    function closeCreateTripModal() { 
+      document.getElementById('modal-trip').classList.add('hidden'); 
+      document.getElementById('trip-form').reset();
+    }
+
+    // Função para adicionar uma nova viagem
+    function addNewTrip(tripData) {
+      trips.push(tripData);
+      renderTrips();
+      updateTripCount();
+      closeCreateTripModal();
+    }
+
+    // Função para adicionar uma nova sala
+    function addNewRoom(roomData) {
+      rooms.push(roomData);
+      renderRooms();
+      updateRoomCount();
+      closeCreateModal();
+    }
+
+    // Função para renderizar as viagens na tela
+    function renderTrips() {
+      const tripsContainer = document.getElementById('trips-container');
+      tripsContainer.innerHTML = '';
+      
+      trips.forEach((trip, index) => {
+        const tripCard = document.createElement('div');
+        tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
+        tripCard.innerHTML = `
+          <div>
+            <h4 class="font-medium text-gray-800">${trip.name}</h4>
+            <p class="text-sm text-gray-500">📍 ${trip.destination} &nbsp; 📅 ${trip.date}</p>
+          </div>
+          <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">${trip.status}</span>
+        `;
+        tripsContainer.appendChild(tripCard);
+      });
+    }
+
+    // Função para renderizar as salas na tela
+    function renderRooms() {
+      const roomsContainer = document.getElementById('rooms-container');
+      const noRoomsMessage = document.getElementById('no-rooms-message');
+      
+      // Limpa o container, mantendo o template original
+      const templateCard = roomsContainer.querySelector('.room-card');
+      roomsContainer.innerHTML = '';
+      if (templateCard) {
+        roomsContainer.appendChild(templateCard);
+      }
+      
+      // Mostra ou esconde a mensagem de "nenhuma sala"
+      if (rooms.length === 0) {
+        noRoomsMessage.classList.remove('hidden');
+      } else {
+        noRoomsMessage.classList.add('hidden');
+        
+        // Adiciona cada sala ao container
+        rooms.forEach((room, index) => {
+          const roomCard = document.createElement('div');
+          roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
+          roomCard.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-gray-800 room-name">${room.name}</h3>
+              <button class="text-gray-400 hover:text-red-500 delete-room" onclick="deleteRoom(${index})">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div class="flex flex-wrap space-x-2 mb-2 room-tags">
+              <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs room-status">${room.status}</span>
+              <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs room-role">${room.role}</span>
+            </div>
+            <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
+            <p class="text-gray-600 mb-1 room-dates">📅 ${room.startDate} - ${room.endDate}</p>
+            <p class="text-gray-600 mb-2 room-participants">👥 ${room.participants} participante${room.participants !== 1 ? 's' : ''}</p>
+            <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
+              Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
+            </div>
+            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
+              Entrar na Sala
+            </button>
+          `;
+          roomsContainer.appendChild(roomCard);
+        });
+      }
+    }
+
+    // Função para excluir uma sala
+    function deleteRoom(index) {
+      if (confirm('Tem certeza que deseja excluir esta sala?')) {
+        rooms.splice(index, 1);
+        renderRooms();
+        updateRoomCount();
+      }
+    }
+
+    // Função para atualizar a contagem de viagens
+    function updateTripCount() {
+      const tripCountElement = document.querySelector('.bg-blue-50 h3');
+      if (tripCountElement) {
+        tripCountElement.textContent = trips.length;
+        
+        // Atualizar também o texto abaixo
+        const planningCount = trips.filter(trip => trip.status === 'Planejando').length;
+        const tripDescription = document.querySelector('.bg-blue-50 p.text-sm');
+        if (tripDescription) {
+          tripDescription.textContent = `${planningCount} em planejamento`;
+        }
+      }
+    }
+
+    // Função para atualizar a contagem de salas
+    function updateRoomCount() {
+      const roomCountElement = document.getElementById('active-rooms-count');
+      if (roomCountElement) {
+        roomCountElement.textContent = rooms.length;
+      }
+    }
 
     // Preenche dados do usuário
     document.getElementById("userName").innerText = user.name;
     document.getElementById("sidebarUserName").innerText = user.name;
     document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
 
+    // Manipular o envio do formulário de nova viagem
+    document.getElementById('trip-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const name = document.getElementById('trip-name').value;
+      const destination = document.getElementById('trip-destination').value;
+      const startDate = new Date(document.getElementById('trip-start').value);
+      const status = document.getElementById('trip-status').value;
+      
+      // Formatar a data para exibição
+      const formattedDate = startDate.toLocaleDateString('pt-BR', { 
+        day: 'numeric', 
+        month: 'short' 
+      });
+      
+      const newTrip = {
+        name: name,
+        destination: destination,
+        date: formattedDate,
+        status: status
+      };
+      
+      addNewTrip(newTrip);
+    });
+
+    // Manipular o envio do formulário de nova sala
+    document.getElementById('create-room-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formElements = this.elements;
+      const name = formElements[0].value;
+      const destination = formElements[1].value;
+      const startDate = new Date(formElements[2].value);
+      const endDate = new Date(formElements[3].value);
+      const budget = parseFloat(formElements[4].value);
+      
+      // Formatar as datas para exibição
+      const formattedStartDate = startDate.toLocaleDateString('pt-BR', { 
+        day: 'numeric', 
+        month: 'short',
+        year: 'numeric'
+      });
+      
+      const formattedEndDate = endDate.toLocaleDateString('pt-BR', { 
+        day: 'numeric', 
+        month: 'short',
+        year: 'numeric'
+      });
+      
+      const newRoom = {
+        name: name,
+        destination: destination,
+        startDate: formattedStartDate,
+        endDate: formattedEndDate,
+        budget: budget,
+        status: 'Planejando',
+        role: 'Admin',
+        participants: 1
+      };
+      
+      addNewRoom(newRoom);
+    });
+
     // Logout
     function logout() {
       localStorage.removeItem("user");
       window.location.href = "index.html";
     }
+
+    // Inicializar a exibição das viagens e salas
+    document.addEventListener('DOMContentLoaded', function() {
+      renderTrips();
+      renderRooms();
+      updateRoomCount();
+    });
   </script>
 </body>
 </html>
