@@ -116,6 +116,20 @@ def dashboard():
     conn.close()
 
     return render_template("dashboard.html", viagens=viagens, destinos=destinos)
+@app.route("/check_email", methods=["POST"])
+def check_email():
+    email = request.form.get("email")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM usuarios WHERE email = %s", (email,))
+    count = cursor.fetchone()[0]
+    cursor.close()
+    conn.close()
+
+    if count > 0:
+        return "EXISTS"
+    else:
+        return "OK"
 
 # Logout
 @app.route("/logout")
