@@ -205,6 +205,19 @@ def sala(room_code):
         return redirect(url_for("dashboard"))
 
     return render_template("sala.html", room=room)
+
+@app.route("/get_rooms")
+@login_required
+def get_rooms():
+    user_id = session["user_id"]
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM rooms WHERE id_criador = %s", (user_id,))
+    rooms = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(rooms)
+
 if __name__ == "__main__":
     app.run(debug=True)
 
