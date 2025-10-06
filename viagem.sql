@@ -169,5 +169,20 @@ CREATE TABLE alimentacoes (
     FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
 );
 
+CREATE TABLE rooms (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    id_criador INT NOT NULL,
+    name VARCHAR(100),
+    destination VARCHAR(100),
+    start_date DATE,
+    end_date DATE,
+    budget DECIMAL(10,2),
+    description TEXT,
+    code VARCHAR(10) UNIQUE,
+    FOREIGN KEY (id_criador) REFERENCES usuarios(id_usuario)
+);
+
 
 --------------------------------------
+select * from usuarios;
+select * from rooms;
