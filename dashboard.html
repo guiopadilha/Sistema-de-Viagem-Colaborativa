@@ -336,7 +336,20 @@
     });
 
     renderRooms();
-    
+    async function loadRooms() {
+  try {
+    const response = await fetch("/get_rooms");
+    rooms = await response.json();
+    renderRooms();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar salas do servidor.");
+  }
+}
+
+// Chama ao abrir a página
+loadRooms();
+
   </script>
 
 </body>
