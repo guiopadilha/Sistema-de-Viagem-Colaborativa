@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for,jsonify, flash, session
 import os
 import mysql.connector
+import random
+import string
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Define o caminho absoluto da pasta atual
@@ -139,5 +141,70 @@ def logout():
     flash("Logout realizado com sucesso.", "success")
     return redirect(url_for("index"))
 
+
+@app.route("/create_room", methods=["POST"])
+@login_required
+def create_room():
+    data = request.get_json()  # pega os dados enviados pelo fetch
+    user_id = session["user_id"]
+    name = data.get("name")
+    destination = data.get("destination")
+    start_date = data.get("startDate")
+    end_date = data.get("endDate")
+    budget = data.get("budget")
+    description = data.get("description")
+
+    # Gera um código de 6 caracteres
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO rooms (id_criador, name, destination, start_date, end_date, budget, description, code)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+    """, (user_id, name, destination, start_date, end_date, budget, description, code))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"success": True, "code": code})
+
+
+# ---------------------- ENTRAR NA SALA ----------------------
+@app.route("/enter_room", methods=["POST"])
+@login_required
+def enter_room():
+    code = request.form.get("code", "").strip().upper()
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM rooms WHERE code = %s", (code,))
+    room = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if room:
+        return redirect(url_for("sala", room_code=room["code"]))
+    else:
+        flash("Código de sala inválido!", "error")
+        return redirect(url_for("dashboard"))
+
+# ---------------------- PÁGINA DA SALA ----------------------
+@app.route("/sala/<room_code>")
+@login_required
+def sala(room_code):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM rooms WHERE code = %s", (room_code,))
+    room = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not room:
+        flash("Sala não encontrada!", "error")
+        return redirect(url_for("dashboard"))
+
+    return render_template("sala.html", room=room)
 if __name__ == "__main__":
     app.run(debug=True)
+
