@@ -81,7 +81,6 @@
             <h2 class="text-2xl font-bold text-gray-800">Bem-vindo de volta, <span id="userName"></span>!</h2>
             <p class="text-gray-500">Suas aventuras estão esperando por você ✈️</p>
           </div>
-         
         </div>
 
         <!-- Cards -->
@@ -112,7 +111,6 @@
         <div class="bg-white p-6 rounded-lg shadow mb-4">
           <h3 class="font-semibold text-gray-800 mb-4">Próximas Viagens</h3>
           <div id="trips-container">
-            <!-- Cards de viagem serão adicionados aqui dinamicamente -->
             <div class="flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card">
               <div>
                 <h4 class="font-medium text-gray-800">Teste</h4>
@@ -143,7 +141,6 @@
 
         <!-- Container de Salas -->
         <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <!-- As salas serão adicionadas aqui dinamicamente -->
           <div class="bg-white p-6 rounded-lg shadow room-card hidden">
             <div class="flex justify-between items-start mb-2">
               <h3 class="font-semibold text-gray-800 room-name">Teste</h3>
@@ -151,23 +148,9 @@
                 <i class="fas fa-times"></i>
               </button>
             </div>
-            <div class="flex flex-wrap space-x-2 mb-2 room-tags">
-              <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs room-status">Planejando</span>
-              <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs room-role">Admin</span>
-            </div>
-            <p class="text-gray-600 mb-1 room-destination">📍 Bali</p>
-            <p class="text-gray-600 mb-1 room-dates">📅 10 set 2025 - 23 set</p>
-            <p class="text-gray-600 mb-2 room-participants">👥 1 participante</p>
-            <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
-              Orçamento: R$ 5.000
-            </div>
-            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
-              Entrar na Sala
-            </button>
           </div>
         </div>
 
-        <!-- Mensagem quando não há salas -->
         <div id="no-rooms-message" class="bg-white p-8 rounded-lg shadow text-center">
           <div class="text-5xl text-gray-300 mb-4">🏕️</div>
           <h3 class="text-lg font-medium text-gray-600 mb-2">Você ainda não tem salas de viagem</h3>
@@ -180,7 +163,7 @@
     </main>
   </div>
 
-  <!-- MODAL PARA CRIAR NOVA SALA -->
+  <!-- MODAIS -->
   <div id="modal-create" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
       <button onclick="closeCreateModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
@@ -220,38 +203,12 @@
     </div>
   </div>
 
-  <!-- Modal para criar nova viagem -->
-  <div id="modal-trip" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
-    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
-      <button onclick="closeCreateTripModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
-      <h2 class="text-lg font-bold text-gray-800 mb-4">Nova Viagem</h2>
-      <form id="trip-form" class="space-y-4">
-        <input type="text" id="trip-name" placeholder="Nome da viagem" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
-        <input type="text" id="trip-destination" placeholder="Destino" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <input type="date" id="trip-start" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
-          <input type="date" id="trip-end" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
-        </div>
-        <select id="trip-status" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
-          <option value="Planejando">Planejando</option>
-          <option value="Confirmada">Confirmada</option>
-          <option value="Em andamento">Em andamento</option>
-          <option value="Concluída">Concluída</option>
-        </select>
-        <div class="flex justify-end space-x-3 pt-2">
-          <button type="button" onclick="closeCreateTripModal()" class="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100">Cancelar</button>
-          <button type="submit" class="px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600">Criar Viagem</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <div id="modal-enter" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
     <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
       <button onclick="closeEnterModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
       <h2 class="text-lg font-bold text-gray-800 mb-4">Entrar em Sala de Viagem</h2>
-      <form class="space-y-4">
-        <input type="text" placeholder="Código de Convite" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500">
+      <form id="enter-room-form" class="space-y-4">
+        <input type="text" id="invite-code" placeholder="Código de Convite" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
         <div class="flex justify-end space-x-3 pt-2">
           <button type="button" onclick="closeEnterModal()" class="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100">Cancelar</button>
           <button type="submit" class="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600">Entrar na Sala</button>
@@ -262,128 +219,41 @@
 
   <!-- SCRIPTS -->
   <script>
-    // Dados do usuário (simulado)
-    const user = {
-      name: "Viajante",
-      email: "viajante@example.com"
-    };
-
-    // Array para armazenar as viagens
-    let trips = [
-      { name: "Teste", destination: "Bali", date: "10 set", status: "Planejando" }
-    ];
-
-    // Array para armazenar as salas
+    const user = { name: "Viajante", email: "viajante@example.com" };
     let rooms = [];
 
-    function toggleSidebar() {
-      document.getElementById('sidebar').classList.toggle('-translate-x-full');
-      document.getElementById('overlay').classList.toggle('hidden');
-    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
 
     function showSection(section) {
       document.getElementById('dashboard').classList.add('hidden');
       document.getElementById('salas').classList.add('hidden');
       document.getElementById(section).classList.remove('hidden');
 
-      document.getElementById('btn-dashboard').classList.remove('bg-blue-50','text-blue-600');
-      document.getElementById('btn-dashboard').classList.add('text-gray-700');
-      document.getElementById('btn-salas').classList.remove('bg-blue-50','text-blue-600');
-      document.getElementById('btn-salas').classList.add('text-gray-700');
-
-      if(section === 'dashboard'){
-        document.getElementById('btn-dashboard').classList.add('bg-blue-50','text-blue-600');
-        document.getElementById('btn-dashboard').classList.remove('text-gray-700');
-      } else {
-        document.getElementById('btn-salas').classList.add('bg-blue-50','text-blue-600');
-        document.getElementById('btn-salas').classList.remove('text-gray-700');
-      }
-
-      if(window.innerWidth < 768){
-        toggleSidebar();
-      }
+      document.getElementById('btn-dashboard').classList.remove('bg-blue-50','text-blue-600'); document.getElementById('btn-dashboard').classList.add('text-gray-700');
+      document.getElementById('btn-salas').classList.remove('bg-blue-50','text-blue-600'); document.getElementById('btn-salas').classList.add('text-gray-700');
+      if(section==='dashboard'){document.getElementById('btn-dashboard').classList.add('bg-blue-50','text-blue-600');}
+      if(section==='salas'){document.getElementById('btn-salas').classList.add('bg-blue-50','text-blue-600');}
     }
 
-    function openCreateModal() { 
-      document.getElementById('modal-create').classList.remove('hidden'); 
-    }
-    
-    function closeCreateModal() { 
-      document.getElementById('modal-create').classList.add('hidden'); 
-    }
-    
-    function openEnterModal() { 
-      document.getElementById('modal-enter').classList.remove('hidden'); 
-    }
-    
-    function closeEnterModal() { 
-      document.getElementById('modal-enter').classList.add('hidden'); 
-    }
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('sidebarUserName').textContent = user.name;
+    document.getElementById('userInitial').textContent = user.name.charAt(0).toUpperCase();
 
-    // Funções para o modal de nova viagem
-    function openCreateTripModal() { 
-      document.getElementById('modal-trip').classList.remove('hidden'); 
-    }
-    
-    function closeCreateTripModal() { 
-      document.getElementById('modal-trip').classList.add('hidden'); 
-      document.getElementById('trip-form').reset();
-    }
+    function logout(){alert('Logout realizado');}
 
-    // Função para adicionar uma nova viagem
-    function addNewTrip(tripData) {
-      trips.push(tripData);
-      renderTrips();
-      updateTripCount();
-      closeCreateTripModal();
-    }
+    function openCreateModal(){document.getElementById('modal-create').classList.remove('hidden');}
+    function closeCreateModal(){document.getElementById('modal-create').classList.add('hidden');}
+    function openEnterModal(){document.getElementById('modal-enter').classList.remove('hidden');}
+    function closeEnterModal(){document.getElementById('modal-enter').classList.add('hidden');}
 
-    // Função para adicionar uma nova sala
-    function addNewRoom(roomData) {
-      rooms.push(roomData);
-      renderRooms();
-      updateRoomCount();
-      closeCreateModal();
-    }
-
-    // Função para renderizar as viagens na tela
-    function renderTrips() {
-      const tripsContainer = document.getElementById('trips-container');
-      tripsContainer.innerHTML = '';
-      
-      trips.forEach((trip, index) => {
-        const tripCard = document.createElement('div');
-        tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
-        tripCard.innerHTML = `
-          <div>
-            <h4 class="font-medium text-gray-800">${trip.name}</h4>
-            <p class="text-sm text-gray-500">📍 ${trip.destination} &nbsp; 📅 ${trip.date}</p>
-          </div>
-          <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">${trip.status}</span>
-        `;
-        tripsContainer.appendChild(tripCard);
-      });
-    }
-
-    // Função para renderizar as salas na tela
     function renderRooms() {
       const roomsContainer = document.getElementById('rooms-container');
       const noRoomsMessage = document.getElementById('no-rooms-message');
-      
-      // Limpa o container, mantendo o template original
-      const templateCard = roomsContainer.querySelector('.room-card');
       roomsContainer.innerHTML = '';
-      if (templateCard) {
-        roomsContainer.appendChild(templateCard);
-      }
-      
-      // Mostra ou esconde a mensagem de "nenhuma sala"
-      if (rooms.length === 0) {
-        noRoomsMessage.classList.remove('hidden');
-      } else {
+
+      if(rooms.length === 0){ noRoomsMessage.classList.remove('hidden'); }
+      else{
         noRoomsMessage.classList.add('hidden');
-        
-        // Adiciona cada sala ao container
         rooms.forEach((room, index) => {
           const roomCard = document.createElement('div');
           roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
@@ -394,13 +264,9 @@
                 <i class="fas fa-times"></i>
               </button>
             </div>
-            <div class="flex flex-wrap space-x-2 mb-2 room-tags">
-              <span class="bg-blue-100 text-blue-600 px-2 py-1 rounded-full text-xs room-status">${room.status}</span>
-              <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs room-role">${room.role}</span>
-            </div>
             <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
+            <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
             <p class="text-gray-600 mb-1 room-dates">📅 ${room.startDate} - ${room.endDate}</p>
-            <p class="text-gray-600 mb-2 room-participants">👥 ${room.participants} participante${room.participants !== 1 ? 's' : ''}</p>
             <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
               Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
             </div>
@@ -408,123 +274,70 @@
               Entrar na Sala
             </button>
           `;
+
+          roomCard.querySelector('.enter-room').addEventListener('click', () => {
+            window.location.href = 'sala.html';
+          });
+
           roomsContainer.appendChild(roomCard);
         });
       }
+      document.getElementById('active-rooms-count').textContent = rooms.length;
     }
 
-    // Função para excluir uma sala
-    function deleteRoom(index) {
-      if (confirm('Tem certeza que deseja excluir esta sala?')) {
-        rooms.splice(index, 1);
-        renderRooms();
-        updateRoomCount();
-      }
-    }
+    function deleteRoom(index){rooms.splice(index,1); renderRooms();}
 
-    // Função para atualizar a contagem de viagens
-    function updateTripCount() {
-      const tripCountElement = document.querySelector('.bg-blue-50 h3');
-      if (tripCountElement) {
-        tripCountElement.textContent = trips.length;
-        
-        // Atualizar também o texto abaixo
-        const planningCount = trips.filter(trip => trip.status === 'Planejando').length;
-        const tripDescription = document.querySelector('.bg-blue-50 p.text-sm');
-        if (tripDescription) {
-          tripDescription.textContent = `${planningCount} em planejamento`;
-        }
-      }
-    }
+    // 🔥 Parte modificada
+  document.getElementById('create-room-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  const name = form[0].value;
+  const destination = form[1].value;
+  const startDate = form[2].value;
+  const endDate = form[3].value;
+  const budget = parseFloat(form[4].value);
+  const description = form[5].value;
 
-    // Função para atualizar a contagem de salas
-    function updateRoomCount() {
-      const roomCountElement = document.getElementById('active-rooms-count');
-      if (roomCountElement) {
-        roomCountElement.textContent = rooms.length;
-      }
-    }
-
-    // Preenche dados do usuário
-    document.getElementById("userName").innerText = user.name;
-    document.getElementById("sidebarUserName").innerText = user.name;
-    document.getElementById("userInitial").innerText = user.name.charAt(0).toUpperCase();
-
-    // Manipular o envio do formulário de nova viagem
-    document.getElementById('trip-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const name = document.getElementById('trip-name').value;
-      const destination = document.getElementById('trip-destination').value;
-      const startDate = new Date(document.getElementById('trip-start').value);
-      const status = document.getElementById('trip-status').value;
-      
-      // Formatar a data para exibição
-      const formattedDate = startDate.toLocaleDateString('pt-BR', { 
-        day: 'numeric', 
-        month: 'short' 
-      });
-      
-      const newTrip = {
-        name: name,
-        destination: destination,
-        date: formattedDate,
-        status: status
-      };
-      
-      addNewTrip(newTrip);
+  try {
+    const response = await fetch("/create_room", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, destination, startDate, endDate, budget, description })
     });
 
-    // Manipular o envio do formulário de nova sala
-    document.getElementById('create-room-form').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const formElements = this.elements;
-      const name = formElements[0].value;
-      const destination = formElements[1].value;
-      const startDate = new Date(formElements[2].value);
-      const endDate = new Date(formElements[3].value);
-      const budget = parseFloat(formElements[4].value);
-      
-      // Formatar as datas para exibição
-      const formattedStartDate = startDate.toLocaleDateString('pt-BR', { 
-        day: 'numeric', 
-        month: 'short',
-        year: 'numeric'
-      });
-      
-      const formattedEndDate = endDate.toLocaleDateString('pt-BR', { 
-        day: 'numeric', 
-        month: 'short',
-        year: 'numeric'
-      });
-      
-      const newRoom = {
-        name: name,
-        destination: destination,
-        startDate: formattedStartDate,
-        endDate: formattedEndDate,
-        budget: budget,
-        status: 'Planejando',
-        role: 'Admin',
-        participants: 1
-      };
-      
-      addNewRoom(newRoom);
-    });
-
-    // Logout
-    function logout() {
-      localStorage.removeItem("user");
-      window.location.href = "index.html";
-    }
-
-    // Inicializar a exibição das viagens e salas
-    document.addEventListener('DOMContentLoaded', function() {
-      renderTrips();
+    const data = await response.json();
+    if (data.success) {
+      const newRoom = { name, destination, startDate, endDate, budget, description, code: data.code };
+      rooms.push(newRoom);
       renderRooms();
-      updateRoomCount();
+      closeCreateModal();
+      form.reset();
+      alert(`Sala "${name}" criada com sucesso!\nCódigo: ${data.code}`);
+    } else {
+      alert("Erro ao criar sala.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão com o servidor.");
+  }
+});
+
+    document.getElementById('enter-room-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const code = document.getElementById('invite-code').value.trim().toUpperCase();
+      const room = rooms.find(r => r.code === code);
+
+      if(room){
+        alert(`Bem-vindo à sala "${room.name}"!`);
+        window.location.href = 'sala.html';
+      } else {
+        alert('Código inválido. Verifique e tente novamente.');
+      }
     });
+
+    renderRooms();
+    
   </script>
+
 </body>
 </html>
