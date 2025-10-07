@@ -241,6 +241,66 @@ def delete_room():
         return jsonify({"success": True})
     else:
         return jsonify({"success": False, "error": "Sala não encontrada ou sem permissão"}), 404
+
+def find_room_by_code(code):
+    """
+    Busca uma sala na tabela 'rooms' pelo código único.
+    """
+    conn = None
+    cursor = None
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT id, id_criador, name, destination, start_date AS startDate,
+                   end_date AS endDate, budget, description, code
+            FROM rooms
+            WHERE UPPER(code) = %s
+        """
+        cursor.execute(query, (code.upper(),))
+        room = cursor.fetchone()
+        return room  # None se não encontrar
+   
+        return None
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
+
+@app.route("/get_room_by_code")
+def get_room_by_code():
+    code = request.args.get("code", "").strip()
+    if not code:
+        return jsonify(success=False, error="Código não fornecido")
+
+    room = find_room_by_code(code)
+    if room:
+        return jsonify(success=True, room=room)
+    return jsonify(success=False, error="Sala não encontrada")
+
+def join_room_for_user(user_id, room_id):
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+
+        # Verifica se o usuário já entrou
+        cursor.execute("SELECT id FROM user_rooms WHERE user_id=%s AND room_id=%s", (user_id, room_id))
+        if cursor.fetchone():
+            return False  # já está registrado
+
+        # Registra entrada do usuário
+        cursor.execute("INSERT INTO user_rooms (user_id, room_id) VALUES (%s, %s)", (user_id, room_id))
+        conn.commit()
+        return True
+    except mysql.connector.Error as e:
+        print("Erro ao salvar no banco:", e)
+        return False
+    finally:
+        cursor.close()
+        conn.close()
+
 if __name__ == "__main__":
     app.run(debug=True)
 
