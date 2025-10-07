@@ -84,28 +84,29 @@
         </div>
 
         <!-- Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <div class="bg-blue-50 p-4 rounded-lg shadow">
-            <p class="text-gray-500">Viagens Ativas</p>
-            <h3 class="text-2xl font-bold text-blue-600">1</h3>
-            <p class="text-sm text-gray-500">1 em planejamento</p>
-          </div>
-          <div class="bg-green-50 p-4 rounded-lg shadow">
-            <p class="text-gray-500">Tarefas Pendentes</p>
-            <h3 class="text-2xl font-bold text-green-600">0</h3>
-            <p class="text-sm text-gray-500">0 de alta prioridade</p>
-          </div>
-          <div class="bg-yellow-50 p-4 rounded-lg shadow">
-            <p class="text-gray-500">Enquetes Abertas</p>
-            <h3 class="text-2xl font-bold text-yellow-600">0</h3>
-            <p class="text-sm text-gray-500">Aguardando seu voto</p>
-          </div>
-          <div class="bg-purple-50 p-4 rounded-lg shadow">
-            <p class="text-gray-500">Total de Gastos</p>
-            <h3 class="text-2xl font-bold text-purple-600">R$ 0</h3>
-            <p class="text-sm text-gray-500">Este mês</p>
-          </div>
-        </div>
+        <!-- Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-blue-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-blue-700">Viagens Ativas</p>
+    <h3 class="text-2xl font-bold text-blue-800">1</h3>
+    <p class="text-sm text-blue-600">1 em planejamento</p>
+  </div>
+  <div class="bg-green-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-green-700">Tarefas Pendentes</p>
+    <h3 class="text-2xl font-bold text-green-800">0</h3>
+    <p class="text-sm text-green-600">0 de alta prioridade</p>
+  </div>
+  <div class="bg-yellow-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-yellow-700">Enquetes Abertas</p>
+    <h3 class="text-2xl font-bold text-yellow-800">0</h3>
+    <p class="text-sm text-yellow-600">Aguardando seu voto</p>
+  </div>
+  <div class="bg-purple-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-purple-700">Total de Gastos</p>
+    <h3 class="text-2xl font-bold text-purple-800">R$ 0</h3>
+    <p class="text-sm text-purple-600">Este mês</p>
+  </div>
+</div>
 
         <!-- Próximas Viagens -->
         <div class="bg-white p-6 rounded-lg shadow mb-4">
@@ -219,6 +220,7 @@
 
   <!-- SCRIPTS -->
   <script>
+    
     const user = { name: "Viajante", email: "viajante@example.com" };
     let rooms = [];
 
@@ -349,6 +351,94 @@
 
 // Chama ao abrir a página
 loadRooms();
+function renderTrips() {
+  const tripsContainer = document.getElementById('trips-container');
+  tripsContainer.innerHTML = ''; // limpa o container
+
+  rooms.forEach(room => {
+    const tripCard = document.createElement('div');
+    tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
+    tripCard.innerHTML = `
+      <div>
+        <h4 class="font-medium text-gray-800">${room.name}</h4>
+        <p class="text-sm text-gray-500">📍 ${room.destination} &nbsp; 📅 ${room.startDate}</p>
+      </div>
+      <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
+    `;
+    tripsContainer.appendChild(tripCard);
+  });
+}
+function renderRooms() {
+  const roomsContainer = document.getElementById('rooms-container');
+  const noRoomsMessage = document.getElementById('no-rooms-message');
+  roomsContainer.innerHTML = '';
+
+  if(rooms.length === 0){
+    noRoomsMessage.classList.remove('hidden');
+  } else {
+    noRoomsMessage.classList.add('hidden');
+    rooms.forEach((room, index) => {
+      const roomCard = document.createElement('div');
+      roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
+      roomCard.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-semibold text-gray-800 room-name">${room.name}</h3>
+          <button class="text-gray-400 hover:text-red-500 delete-room" onclick="deleteRoom(${index})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
+        <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
+        <p class="text-gray-600 mb-1 room-dates">📅 ${room.startDate} - ${room.endDate}</p>
+        <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
+          Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
+        </div>
+        <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
+          Entrar na Sala
+        </button>
+      `;
+      roomCard.querySelector('.enter-room').addEventListener('click', () => {
+        window.location.href = 'sala.html';
+      });
+      roomsContainer.appendChild(roomCard);
+    });
+  }
+
+  document.getElementById('active-rooms-count').textContent = rooms.length;
+  
+  // 🔥 Atualiza o dashboard de próximas viagens
+  renderTrips();
+}
+
+
+function deleteRoom(index) {
+  const room = rooms[index];
+  if (!room) return;
+
+  if (!confirm(`Excluir a sala "${room.name}"? Esta ação não pode ser desfeita.`)) return;
+
+  // envia pedido para o servidor apagar a sala permanentemente
+  fetch("/delete_room", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: room.code })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // remove localmente e atualiza a UI
+      rooms.splice(index, 1);
+      renderRooms();
+    } else {
+      alert(data.error || "Erro ao apagar a sala no servidor.");
+      console.error("delete_room erro:", data);
+    }
+  })
+  .catch(err => {
+    console.error("Erro ao chamar /delete_room:", err);
+    alert("Erro de conexão ao excluir a sala.");
+  });
+}
 
   </script>
 
