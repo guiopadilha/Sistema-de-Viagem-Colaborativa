@@ -206,7 +206,9 @@ def sala(room_code):
 
     return render_template("sala.html", room=room)
 
-@app.route("/get_rooms")
+
+    return jsonify(rooms)
+@app.route("/get_rooms", methods=["GET"])
 @login_required
 def get_rooms():
     user_id = session["user_id"]
@@ -218,6 +220,27 @@ def get_rooms():
     conn.close()
     return jsonify(rooms)
 
+@app.route("/delete_room", methods=["POST"])
+@login_required
+def delete_room():
+    data = request.get_json()
+    code = data.get("code")
+    if not code:
+        return jsonify({"success": False, "error": "Código ausente"}), 400
+
+    user_id = session["user_id"]
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM rooms WHERE code = %s AND id_criador = %s", (code, user_id))
+    deleted = cursor.rowcount
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    if deleted:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"success": False, "error": "Sala não encontrada ou sem permissão"}), 404
 if __name__ == "__main__":
     app.run(debug=True)
 
