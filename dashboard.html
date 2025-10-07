@@ -87,7 +87,7 @@
         <!-- Cards -->
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
   <div class="bg-blue-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-    <p class="text-blue-700">Viagens Ativas</p>
+    <p class="text-blue-700">Roteiros</p>
     <h3 class="text-2xl font-bold text-blue-800">1</h3>
     <p class="text-sm text-blue-600">1 em planejamento</p>
   </div>
@@ -115,7 +115,10 @@
             <div class="flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card">
               <div>
                 <h4 class="font-medium text-gray-800">Teste</h4>
-                <p class="text-sm text-gray-500">📍 Bali &nbsp; 📅 10 set</p>
+                <p class="text-gray-600 mb-1 room-dates">
+  📅 ${formatDate(room.start_date || room.startDate)} - ${formatDate(room.end_date || room.endDate)}
+</p>
+
               </div>
               <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
             </div>
@@ -324,18 +327,34 @@
   }
 });
 
-    document.getElementById('enter-room-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const code = document.getElementById('invite-code').value.trim().toUpperCase();
-      const room = rooms.find(r => r.code === code);
+   document.getElementById('enter-room-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const code = document.getElementById('invite-code').value.trim().toUpperCase();
 
-      if(room){
-        alert(`Bem-vindo à sala "${room.name}"!`);
-        window.location.href = 'sala.html';
-      } else {
-        alert('Código inválido. Verifique e tente novamente.');
+  try {
+    const response = await fetch(`/get_room_by_code?code=${code}`);
+    const data = await response.json();
+
+    if (data.success) {
+      // Verifica se a sala já existe localmente
+      const exists = rooms.some(r => r.code === data.room.code);
+      if (!exists) {
+        // Adiciona a sala ao array
+        rooms.push(data.room);
+        // Atualiza os cards no dashboard e "Minhas Salas"
+        renderRooms();
       }
-    });
+      closeEnterModal();
+      alert(`Sala "${data.room.name}" adicionada ao seu dashboard!`);
+    } else {
+      alert('Código inválido ou sala não encontrada.');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao conectar com o servidor.');
+  }
+});
+
 
     renderRooms();
     async function loadRooms() {
@@ -389,7 +408,10 @@ function renderRooms() {
         </div>
         <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
         <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
-        <p class="text-gray-600 mb-1 room-dates">📅 ${room.startDate} - ${room.endDate}</p>
+        <p class="text-gray-600 mb-1 room-dates">
+  📅 ${formatDate(room.start_date || room.startDate)} - ${formatDate(room.end_date || room.endDate)}
+</p>
+
         <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
           Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
         </div>
@@ -408,6 +430,7 @@ function renderRooms() {
   
   // 🔥 Atualiza o dashboard de próximas viagens
   renderTrips();
+  
 }
 
 
@@ -439,6 +462,47 @@ function deleteRoom(index) {
     alert("Erro de conexão ao excluir a sala.");
   });
 }
+function formatDate(dateStr) {
+  if (!dateStr) return "—"; // mostra traço se a data estiver vazia
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr; // se for texto (tipo '10/09/2025'), mostra como está
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+}
+function renderTrips() {
+  const tripsContainer = document.getElementById('trips-container');
+  tripsContainer.innerHTML = '';
+
+  rooms.forEach(room => {
+    const start = room.start_date || room.startDate;
+    const end = room.end_date || room.endDate;
+    const formattedStart = formatDate(start);
+    const formattedEnd = formatDate(end);
+
+    const tripCard = document.createElement('div');
+    tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
+    tripCard.innerHTML = `
+      <div>
+        <h4 class="font-medium text-gray-800">${room.name}</h4>
+        <p class="text-sm text-gray-500">
+          📍 ${room.destination} &nbsp; 📅 ${formattedStart} - ${formattedEnd}
+        </p>
+      </div>
+      <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
+    `;
+    tripsContainer.appendChild(tripCard);
+  });
+}
+function atualizarContadorViagens() {
+  // conta quantos trip-card existem dentro do container
+  const totalViagens = document.querySelectorAll('#trips-container .trip-card').length;
+  // atualiza o número no span do dashboard
+  document.getElementById('active-rooms-count').textContent = totalViagens;
+}
+
+// chama depois de renderizar as viagens
+renderTrips(); // sua função que cria os cards
+atualizarContadorViagens();
+
 
   </script>
 
