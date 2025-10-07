@@ -1,188 +1,482 @@
--- Criar o banco de dados (caso ainda não exista)
-CREATE DATABASE IF NOT EXISTS viagens_colegas;
-USE viagens_colegas;
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelTogether Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 font-sans">
 
---------------------------------------
--- Usuários (cadastro e login)
---------------------------------------
-CREATE TABLE usuarios (
-    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    senha VARCHAR(255) NOT NULL,
-    telefone VARCHAR(20),
-    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+  <div class="flex min-h-screen">
+    
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col justify-between fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50">
+      <div>
+        <div class="p-6 flex items-center space-x-2">
+          <span class="text-blue-600 text-2xl">✈️</span>
+          <div>
+            <h1 class="font-bold text-lg text-gray-800">TravelTogether</h1>
+            <p class="text-sm text-gray-500">Planeje. Compartilhe. Viaje.</p>
+          </div>
+        </div>
+        <nav class="mt-6">
+          <button onclick="showSection('dashboard')" id="btn-dashboard"
+            class="w-full text-left flex items-center p-3 bg-blue-50 text-blue-600 rounded-md mx-3 mb-2">
+            <span class="mr-3">🏠</span> Dashboard
+          </button>
+          <button onclick="showSection('salas')" id="btn-salas"
+            class="w-full text-left flex items-center p-3 hover:bg-gray-100 text-gray-700 rounded-md mx-3">
+            <span class="mr-3">👥</span> Minhas Salas
+          </button>
+        </nav>
+        <div class="mt-8 px-6">
+          <h2 class="text-gray-500 text-sm mb-3 font-semibold">RESUMO RÁPIDO</h2>
+          <ul class="space-y-2">
+            <li class="flex justify-between text-gray-700">
+              <span>Salas Ativas</span><span id="active-rooms-count" class="bg-blue-100 text-blue-600 px-2 rounded-full">0</span>
+            </li>
+            <li class="flex justify-between text-gray-700">
+              <span>Tarefas Pendentes</span><span class="bg-yellow-100 text-yellow-600 px-2 rounded-full">7</span>
+            </li>
+            <li class="flex justify-between text-gray-700">
+              <span>Enquetes Abertas</span><span class="bg-green-100 text-green-600 px-2 rounded-full">2</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="p-6 border-t text-gray-700">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+              <span id="userInitial">U</span>
+            </div>
+            <div>
+              <p class="font-medium" id="sidebarUserName">Usuário</p>
+              <p class="text-sm text-gray-500">Planeje suas próx...</p>
+            </div>
+          </div>
+          <!-- Botão Logout -->
+          <button onclick="logout()" class="ml-3 text-red-500 hover:text-red-700 text-sm">Sair</button>
+        </div>
+      </div>
+    </aside>
 
---------------------------------------
--- Destinos
---------------------------------------
-CREATE TABLE destinos (
-    id_destino INT AUTO_INCREMENT PRIMARY KEY,
-    nome VARCHAR(150) NOT NULL,
-    pais VARCHAR(100),
-    cidade VARCHAR(100),
-    descricao TEXT
-);
+    <!-- Overlay para mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40 md:hidden" onclick="toggleSidebar()"></div>
 
---------------------------------------
--- Hospedagem (ligada a um destino)
---------------------------------------
-CREATE TABLE hospedagens (
-    id_hospedagem INT AUTO_INCREMENT PRIMARY KEY,
-    id_destino INT NOT NULL,
-    nome VARCHAR(150) NOT NULL,
-    preco DECIMAL(10,2) NOT NULL,
-    tipo VARCHAR(50),
-    contato VARCHAR(100),
-    FOREIGN KEY (id_destino) REFERENCES destinos(id_destino)
-);
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-8 md:ml-64">
+      
+      <!-- Botão para abrir menu em mobile -->
+      <button onclick="toggleSidebar()" class="md:hidden mb-4 bg-blue-500 text-white px-4 py-2 rounded-md">
+        ☰ Menu
+      </button>
 
---------------------------------------
--- Viagens (criação de roteiro)
---------------------------------------
-CREATE TABLE viagens (
-    id_viagem INT AUTO_INCREMENT PRIMARY KEY,
-    id_criador INT NOT NULL,
-    titulo VARCHAR(150) NOT NULL,
-    id_destino INT NOT NULL,
-    data_inicio DATE,
-    data_fim DATE,
-    FOREIGN KEY (id_criador) REFERENCES usuarios(id_usuario),
-    FOREIGN KEY (id_destino) REFERENCES destinos(id_destino)
-);
+      <!-- DASHBOARD -->
+      <section id="dashboard">
+        <div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">Bem-vindo de volta, <span id="userName"></span>!</h2>
+            <p class="text-gray-500">Suas aventuras estão esperando por você ✈️</p>
+          </div>
+        </div>
 
---------------------------------------
--- Participantes das viagens (Party / Sala)
---------------------------------------
-CREATE TABLE participantes (
-    id_participante INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    id_usuario INT NOT NULL,
-    confirmado BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
+        <!-- Cards -->
+        <!-- Cards -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+  <div class="bg-blue-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-blue-700">Viagens Ativas</p>
+    <h3 class="text-2xl font-bold text-blue-800">1</h3>
+    <p class="text-sm text-blue-600">1 em planejamento</p>
+  </div>
+  <div class="bg-green-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-green-700">Tarefas Pendentes</p>
+    <h3 class="text-2xl font-bold text-green-800">0</h3>
+    <p class="text-sm text-green-600">0 de alta prioridade</p>
+  </div>
+  <div class="bg-yellow-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-yellow-700">Enquetes Abertas</p>
+    <h3 class="text-2xl font-bold text-yellow-800">0</h3>
+    <p class="text-sm text-yellow-600">Aguardando seu voto</p>
+  </div>
+  <div class="bg-purple-100 p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow">
+    <p class="text-purple-700">Total de Gastos</p>
+    <h3 class="text-2xl font-bold text-purple-800">R$ 0</h3>
+    <p class="text-sm text-purple-600">Este mês</p>
+  </div>
+</div>
 
---------------------------------------
--- Chat em grupo (na Party / Sala de Viagem)
---------------------------------------
-CREATE TABLE mensagens (
-    id_mensagem INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    id_usuario INT NOT NULL,
-    mensagem TEXT NOT NULL,
-    data_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
+        <!-- Próximas Viagens -->
+        <div class="bg-white p-6 rounded-lg shadow mb-4">
+          <h3 class="font-semibold text-gray-800 mb-4">Próximas Viagens</h3>
+          <div id="trips-container">
+            <div class="flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card">
+              <div>
+                <h4 class="font-medium text-gray-800">Teste</h4>
+                <p class="text-gray-600 mb-1 room-dates">
+  📅 ${formatDate(room.start_date || room.startDate)} - ${formatDate(room.end_date || room.endDate)}
+</p>
 
---------------------------------------
--- Votações e Sugestões (destinos, atividades, datas)
---------------------------------------
-CREATE TABLE votacoes (
-    id_votacao INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    tipo VARCHAR(50), -- destino, atividade, data
-    descricao VARCHAR(255) NOT NULL,
-    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
-);
+              </div>
+              <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
+            </div>
+          </div>
+        </div>
+      </section>
 
-CREATE TABLE votos (
-    id_voto INT AUTO_INCREMENT PRIMARY KEY,
-    id_votacao INT NOT NULL,
-    id_usuario INT NOT NULL,
-    opcao VARCHAR(255) NOT NULL,
-    data_voto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_votacao) REFERENCES votacoes(id_votacao),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
+      <!-- MINHAS SALAS -->
+      <section id="salas" class="hidden">
+        <div class="flex flex-wrap justify-between items-center mb-6 gap-3">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800">Minhas Salas de Viagem</h2>
+            <p class="text-gray-500">Organize suas aventuras com amigos e família</p>
+          </div>
+          <div class="flex flex-wrap gap-2 w-full md:w-auto">
+            <button onclick="openEnterModal()" class="flex-1 md:flex-none border border-blue-500 text-blue-500 px-4 py-2 rounded-md hover:bg-blue-50">
+              👥 Entrar em Sala
+            </button>
+            <button onclick="openCreateModal()" class="flex-1 md:flex-none bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md shadow">
+              + Nova Sala
+            </button>
+          </div>
+        </div>
 
---------------------------------------
--- Cronograma da viagem
---------------------------------------
-CREATE TABLE cronogramas (
-    id_cronograma INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    data_evento DATE NOT NULL,
-    atividade VARCHAR(255) NOT NULL,
-    horario TIME,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
-);
+        <!-- Container de Salas -->
+        <div id="rooms-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="bg-white p-6 rounded-lg shadow room-card hidden">
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-gray-800 room-name">Teste</h3>
+              <button class="text-gray-400 hover:text-red-500 delete-room">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+        </div>
 
---------------------------------------
--- Checklist interativo
---------------------------------------
-CREATE TABLE checklists (
-    id_checklist INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    item VARCHAR(255) NOT NULL,
-    concluido BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
-);
+        <div id="no-rooms-message" class="bg-white p-8 rounded-lg shadow text-center">
+          <div class="text-5xl text-gray-300 mb-4">🏕️</div>
+          <h3 class="text-lg font-medium text-gray-600 mb-2">Você ainda não tem salas de viagem</h3>
+          <p class="text-gray-500 mb-4">Crie sua primeira sala para começar a planejar sua próxima aventura!</p>
+          <button onclick="openCreateModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
+            Criar Primeira Sala
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
 
---------------------------------------
--- Controle financeiro
---------------------------------------
-CREATE TABLE despesas (
-    id_despesa INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    id_usuario INT NOT NULL, -- quem pagou
-    descricao VARCHAR(255),
-    valor DECIMAL(10,2) NOT NULL,
-    data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
+  <!-- MODAIS -->
+  <div id="modal-create" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 relative">
+      <button onclick="closeCreateModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Criar Nova Sala de Viagem</h2>
+      <form id="create-room-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Nome da Sala</label>
+          <input type="text" placeholder="Ex: Férias em Bali" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Destino</label>
+          <input type="text" placeholder="Ex: Bali, Indonésia" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Início</label>
+            <input type="date" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Data de Término</label>
+            <input type="date" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Orçamento (R$)</label>
+          <input type="number" placeholder="5000" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+          <textarea placeholder="Descreva sua viagem..." class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeCreateModal()" class="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-md bg-green-500 text-white hover:bg-green-600">Criar Sala</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
--- Registro de pagamentos
-CREATE TABLE pagamentos (
-    id_pagamento INT AUTO_INCREMENT PRIMARY KEY,
-    id_despesa INT NOT NULL,
-    id_usuario INT NOT NULL, -- quem deve pagar
-    valor_pago DECIMAL(10,2) DEFAULT 0,
-    data_pagamento TIMESTAMP NULL,
-    FOREIGN KEY (id_despesa) REFERENCES despesas(id_despesa),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
+  <div id="modal-enter" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative">
+      <button onclick="closeEnterModal()" class="absolute top-3 right-3 text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+      <h2 class="text-lg font-bold text-gray-800 mb-4">Entrar em Sala de Viagem</h2>
+      <form id="enter-room-form" class="space-y-4">
+        <input type="text" id="invite-code" placeholder="Código de Convite" class="w-full border rounded-md px-3 py-2 focus:ring-2 focus:ring-blue-500" required>
+        <div class="flex justify-end space-x-3 pt-2">
+          <button type="button" onclick="closeEnterModal()" class="px-4 py-2 rounded-md border text-gray-600 hover:bg-gray-100">Cancelar</button>
+          <button type="submit" class="px-4 py-2 rounded-md bg-blue-500 text-white hover:bg-blue-600">Entrar na Sala</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
---------------------------------------
--- Transporte e Alimentação
---------------------------------------
-CREATE TABLE transportes (
-    id_transporte INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    tipo VARCHAR(50), -- passagem, transporte local
-    empresa VARCHAR(100),
-    preco DECIMAL(10,2),
-    data DATE,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
-);
+  <!-- SCRIPTS -->
+  <script>
+    
+    const user = { name: "Viajante", email: "viajante@example.com" };
+    let rooms = [];
 
-CREATE TABLE alimentacoes (
-    id_alimentacao INT AUTO_INCREMENT PRIMARY KEY,
-    id_viagem INT NOT NULL,
-    descricao VARCHAR(150) NOT NULL,
-    preco DECIMAL(10,2),
-    data DATE,
-    FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
-);
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
 
-CREATE TABLE rooms (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    id_criador INT NOT NULL,
-    name VARCHAR(100),
-    destination VARCHAR(100),
-    start_date DATE,
-    end_date DATE,
-    budget DECIMAL(10,2),
-    description TEXT,
-    code VARCHAR(10) UNIQUE,
-    FOREIGN KEY (id_criador) REFERENCES usuarios(id_usuario)
-);
+    function showSection(section) {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('salas').classList.add('hidden');
+      document.getElementById(section).classList.remove('hidden');
+
+      document.getElementById('btn-dashboard').classList.remove('bg-blue-50','text-blue-600'); document.getElementById('btn-dashboard').classList.add('text-gray-700');
+      document.getElementById('btn-salas').classList.remove('bg-blue-50','text-blue-600'); document.getElementById('btn-salas').classList.add('text-gray-700');
+      if(section==='dashboard'){document.getElementById('btn-dashboard').classList.add('bg-blue-50','text-blue-600');}
+      if(section==='salas'){document.getElementById('btn-salas').classList.add('bg-blue-50','text-blue-600');}
+    }
+
+    document.getElementById('userName').textContent = user.name;
+    document.getElementById('sidebarUserName').textContent = user.name;
+    document.getElementById('userInitial').textContent = user.name.charAt(0).toUpperCase();
+
+    function logout(){alert('Logout realizado');}
+
+    function openCreateModal(){document.getElementById('modal-create').classList.remove('hidden');}
+    function closeCreateModal(){document.getElementById('modal-create').classList.add('hidden');}
+    function openEnterModal(){document.getElementById('modal-enter').classList.remove('hidden');}
+    function closeEnterModal(){document.getElementById('modal-enter').classList.add('hidden');}
+
+    function renderRooms() {
+      const roomsContainer = document.getElementById('rooms-container');
+      const noRoomsMessage = document.getElementById('no-rooms-message');
+      roomsContainer.innerHTML = '';
+
+      if(rooms.length === 0){ noRoomsMessage.classList.remove('hidden'); }
+      else{
+        noRoomsMessage.classList.add('hidden');
+        rooms.forEach((room, index) => {
+          const roomCard = document.createElement('div');
+          roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
+          roomCard.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+              <h3 class="font-semibold text-gray-800 room-name">${room.name}</h3>
+              <button class="text-gray-400 hover:text-red-500 delete-room" onclick="deleteRoom(${index})">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
+            <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
+            <p class="text-gray-600 mb-1 room-dates">📅 ${room.startDate} - ${room.endDate}</p>
+            <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
+              Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
+            </div>
+            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
+              Entrar na Sala
+            </button>
+          `;
+
+          roomCard.querySelector('.enter-room').addEventListener('click', () => {
+            window.location.href = 'sala.html';
+          });
+
+          roomsContainer.appendChild(roomCard);
+        });
+      }
+      document.getElementById('active-rooms-count').textContent = rooms.length;
+    }
+
+    function deleteRoom(index){rooms.splice(index,1); renderRooms();}
+
+    // 🔥 Parte modificada
+  document.getElementById('create-room-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const form = e.target;
+  const name = form[0].value;
+  const destination = form[1].value;
+  const startDate = form[2].value;
+  const endDate = form[3].value;
+  const budget = parseFloat(form[4].value);
+  const description = form[5].value;
+
+  try {
+    const response = await fetch("/create_room", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, destination, startDate, endDate, budget, description })
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      const newRoom = { name, destination, startDate, endDate, budget, description, code: data.code };
+      rooms.push(newRoom);
+      renderRooms();
+      closeCreateModal();
+      form.reset();
+      alert(`Sala "${name}" criada com sucesso!\nCódigo: ${data.code}`);
+    } else {
+      alert("Erro ao criar sala.");
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Erro de conexão com o servidor.");
+  }
+});
+
+    document.getElementById('enter-room-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const code = document.getElementById('invite-code').value.trim().toUpperCase();
+      const room = rooms.find(r => r.code === code);
+
+      if(room){
+        alert(`Bem-vindo à sala "${room.name}"!`);
+        window.location.href = 'sala.html';
+      } else {
+        alert('Código inválido. Verifique e tente novamente.');
+      }
+    });
+
+    renderRooms();
+    async function loadRooms() {
+  try {
+    const response = await fetch("/get_rooms");
+    rooms = await response.json();
+    renderRooms();
+  } catch (err) {
+    console.error(err);
+    alert("Erro ao carregar salas do servidor.");
+  }
+}
+
+// Chama ao abrir a página
+loadRooms();
+function renderTrips() {
+  const tripsContainer = document.getElementById('trips-container');
+  tripsContainer.innerHTML = ''; // limpa o container
+
+  rooms.forEach(room => {
+    const tripCard = document.createElement('div');
+    tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
+    tripCard.innerHTML = `
+      <div>
+        <h4 class="font-medium text-gray-800">${room.name}</h4>
+        <p class="text-sm text-gray-500">📍 ${room.destination} &nbsp; 📅 ${room.startDate}</p>
+      </div>
+      <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
+    `;
+    tripsContainer.appendChild(tripCard);
+  });
+}
+function renderRooms() {
+  const roomsContainer = document.getElementById('rooms-container');
+  const noRoomsMessage = document.getElementById('no-rooms-message');
+  roomsContainer.innerHTML = '';
+
+  if(rooms.length === 0){
+    noRoomsMessage.classList.remove('hidden');
+  } else {
+    noRoomsMessage.classList.add('hidden');
+    rooms.forEach((room, index) => {
+      const roomCard = document.createElement('div');
+      roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
+      roomCard.innerHTML = `
+        <div class="flex justify-between items-start mb-2">
+          <h3 class="font-semibold text-gray-800 room-name">${room.name}</h3>
+          <button class="text-gray-400 hover:text-red-500 delete-room" onclick="deleteRoom(${index})">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
+        <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
+        <p class="text-gray-600 mb-1 room-dates">
+  📅 ${formatDate(room.start_date || room.startDate)} - ${formatDate(room.end_date || room.endDate)}
+</p>
+
+        <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
+          Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
+        </div>
+        <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
+          Entrar na Sala
+        </button>
+      `;
+      roomCard.querySelector('.enter-room').addEventListener('click', () => {
+        window.location.href = 'sala.html';
+      });
+      roomsContainer.appendChild(roomCard);
+    });
+  }
+
+  document.getElementById('active-rooms-count').textContent = rooms.length;
+  
+  // 🔥 Atualiza o dashboard de próximas viagens
+  renderTrips();
+}
 
 
---------------------------------------
-select * from usuarios;
-select * from rooms;
+function deleteRoom(index) {
+  const room = rooms[index];
+  if (!room) return;
+
+  if (!confirm(`Excluir a sala "${room.name}"? Esta ação não pode ser desfeita.`)) return;
+
+  // envia pedido para o servidor apagar a sala permanentemente
+  fetch("/delete_room", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code: room.code })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      // remove localmente e atualiza a UI
+      rooms.splice(index, 1);
+      renderRooms();
+    } else {
+      alert(data.error || "Erro ao apagar a sala no servidor.");
+      console.error("delete_room erro:", data);
+    }
+  })
+  .catch(err => {
+    console.error("Erro ao chamar /delete_room:", err);
+    alert("Erro de conexão ao excluir a sala.");
+  });
+}
+function formatDate(dateStr) {
+  if (!dateStr) return "—"; // mostra traço se a data estiver vazia
+  const d = new Date(dateStr);
+  if (isNaN(d)) return dateStr; // se for texto (tipo '10/09/2025'), mostra como está
+  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
+}
+function renderTrips() {
+  const tripsContainer = document.getElementById('trips-container');
+  tripsContainer.innerHTML = '';
+
+  rooms.forEach(room => {
+    const start = room.start_date || room.startDate;
+    const end = room.end_date || room.endDate;
+    const formattedStart = formatDate(start);
+    const formattedEnd = formatDate(end);
+
+    const tripCard = document.createElement('div');
+    tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
+    tripCard.innerHTML = `
+      <div>
+        <h4 class="font-medium text-gray-800">${room.name}</h4>
+        <p class="text-sm text-gray-500">
+          📍 ${room.destination} &nbsp; 📅 ${formattedStart} - ${formattedEnd}
+        </p>
+      </div>
+      <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
+    `;
+    tripsContainer.appendChild(tripCard);
+  });
+}
+
+  </script>
+
+</body>
+</html>
