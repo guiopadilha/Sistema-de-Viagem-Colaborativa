@@ -99,42 +99,73 @@
       </div>
 
       <div id="roteiro" class="tab-content">
-        <div class="bg-gray-50 border rounded-2xl p-8 text-center">
-          <h2 class="text-xl font-semibold mb-3">Roteiro da Viagem</h2>
-          <p class="text-gray-500 mb-6">Nenhum dia adicionado ao roteiro ainda.</p>
-          <button class="bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
-            + Adicionar Dia
-          </button>
-        </div>
-      </div>
+  <div class="bg-gray-50 border rounded-2xl p-8 text-center" id="roteiro-container">
+    <h2 class="text-xl font-semibold mb-3">Roteiro da Viagem</h2>
+    <p id="mensagem-vazia" class="text-gray-500 mb-6">Nenhum dia adicionado ao roteiro ainda.</p>
+
+    <div id="dias-container" class="space-y-6 text-left"></div>
+
+    <button id="adicionar-dia" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Dia
+    </button>
+  </div>
+</div>
 
       <div id="enquetes" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-8 text-center">
-          <h2 class="text-xl font-semibold mb-3">Enquetes da Viagem</h2>
-          <p class="text-gray-500">Nenhuma enquete criada ainda.</p>
-        </div>
-      </div>
+  <div class="bg-gray-50 border rounded-2xl p-8 text-center" id="enquetes-container">
+    <h2 class="text-xl font-semibold mb-3">Enquetes da Viagem</h2>
+    <p id="mensagem-enquete-vazia" class="text-gray-500 mb-6">Nenhuma enquete criada ainda.</p>
+
+    <div id="lista-enquetes" class="space-y-6 text-left"></div>
+
+    <button id="adicionar-enquete" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Criar Enquete
+    </button>
+  </div>
+</div>
 
       <div id="gastos" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-8 text-center">
-          <h2 class="text-xl font-semibold mb-3">Controle de Gastos</h2>
-          <p class="text-gray-500">Nenhum gasto registrado ainda.</p>
-        </div>
-      </div>
+  <div class="bg-gray-50 border rounded-2xl p-8 text-center" id="gastos-container">
+    <h2 class="text-xl font-semibold mb-3">Controle de Gastos</h2>
+    <p id="mensagem-gastos-vazia" class="text-gray-500 mb-6">Nenhum gasto registrado ainda.</p>
+
+    <div id="lista-gastos" class="space-y-4 text-left"></div>
+
+    <div id="total-gastos" class="hidden mt-6 text-lg font-semibold text-gray-700">
+      Total: R$ <span id="valor-total">0,00</span>
+    </div>
+
+    <button id="adicionar-gasto" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Gasto
+    </button>
+  </div>
+</div>
 
       <div id="tarefas" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-8 text-center">
-          <h2 class="text-xl font-semibold mb-3">Tarefas da Viagem</h2>
-          <p class="text-gray-500">Nenhuma tarefa adicionada ainda.</p>
-        </div>
-      </div>
+  <div class="bg-gray-50 border rounded-2xl p-8 text-center" id="tarefas-container">
+    <h2 class="text-xl font-semibold mb-3">Tarefas da Viagem</h2>
+    <p id="mensagem-tarefas-vazia" class="text-gray-500 mb-6">Nenhuma tarefa adicionada ainda.</p>
+
+    <div id="lista-tarefas" class="space-y-4 text-left"></div>
+
+    <button id="adicionar-tarefa" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Tarefa
+    </button>
+  </div>
+</div>
 
       <div id="membros" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-8 text-center">
-          <h2 class="text-xl font-semibold mb-3">Membros da Sala</h2>
-          <p class="text-gray-500">Nenhum membro adicionado ainda.</p>
-        </div>
-      </div>
+  <div class="bg-gray-50 border rounded-2xl p-8 text-center" id="membros-container">
+    <h2 class="text-xl font-semibold mb-3">Membros da Sala</h2>
+    <p id="mensagem-membros-vazia" class="text-gray-500 mb-6">Nenhum membro adicionado ainda.</p>
+
+    <div id="lista-membros" class="space-y-4 text-left"></div>
+
+    <button id="adicionar-membro" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Membro
+    </button>
+  </div>
+</div>
     </div>
   </main>
 
@@ -152,6 +183,342 @@
         document.getElementById(target).classList.remove("hidden");
       });
     });
+
+    const btnAdicionarDia = document.getElementById("adicionar-dia");
+  const diasContainer = document.getElementById("dias-container");
+  const mensagemVazia = document.getElementById("mensagem-vazia");
+  let contadorDias = 0;
+
+  btnAdicionarDia.addEventListener("click", () => {
+    mensagemVazia.classList.add("hidden");
+    contadorDias++;
+
+    const diaDiv = document.createElement("div");
+    diaDiv.className = "bg-white p-4 border rounded-xl shadow-sm";
+    diaDiv.innerHTML = `
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold">Dia ${contadorDias}</h3>
+        <button class="text-red-500 hover:text-red-700 text-sm font-medium remover-dia">Remover dia</button>
+      </div>
+      <div class="atividades space-y-3"></div>
+      <button class="mt-3 bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 adicionar-atividade">
+        + Adicionar Atividade
+      </button>
+    `;
+
+    diasContainer.appendChild(diaDiv);
+
+    // Botão de remover o dia
+    diaDiv.querySelector(".remover-dia").addEventListener("click", () => {
+      diaDiv.remove();
+      if (diasContainer.children.length === 0) {
+        mensagemVazia.classList.remove("hidden");
+        contadorDias = 0;
+      }
+    });
+
+    // Botão de adicionar atividade
+    diaDiv.querySelector(".adicionar-atividade").addEventListener("click", () => {
+      const atividadesContainer = diaDiv.querySelector(".atividades");
+      const atividadeDiv = document.createElement("div");
+      atividadeDiv.className = "flex items-center justify-between bg-gray-50 p-2 rounded-lg border";
+
+      atividadeDiv.innerHTML = `
+        <div class="flex-1">
+          <input type="time" class="border rounded p-1 text-sm" />
+          <input type="text" placeholder="Descrição da atividade" class="border rounded p-1 text-sm w-64 ml-2" />
+        </div>
+        <button class="text-red-500 hover:text-red-700 text-xs remover-atividade">Remover</button>
+      `;
+
+      atividadesContainer.appendChild(atividadeDiv);
+
+      // Botão para remover atividade
+      atividadeDiv.querySelector(".remover-atividade").addEventListener("click", () => {
+        atividadeDiv.remove();
+      });
+    });
+  });
+
+  const btnAdicionarEnquete = document.getElementById("adicionar-enquete");
+  const listaEnquetes = document.getElementById("lista-enquetes");
+  const mensagemVaziaEnquete = document.getElementById("mensagem-enquete-vazia");
+  let contadorEnquetes = 0;
+
+  btnAdicionarEnquete.addEventListener("click", () => {
+    mensagemVaziaEnquete.classList.add("hidden");
+    contadorEnquetes++;
+
+    const enqueteDiv = document.createElement("div");
+    enqueteDiv.className = "bg-white p-4 border rounded-xl shadow-sm";
+    enqueteDiv.innerHTML = `
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="text-lg font-semibold">Enquete ${contadorEnquetes}</h3>
+        <button class="text-red-500 hover:text-red-700 text-sm font-medium remover-enquete">Remover enquete</button>
+      </div>
+
+      <div class="mb-3">
+        <input type="text" placeholder="Pergunta da enquete (ex: Onde vamos jantar?)"
+          class="w-full border rounded p-2 text-sm" />
+      </div>
+
+      <div class="opcoes space-y-2 mb-3">
+        <div class="flex items-center">
+          <input type="text" placeholder="Opção 1" class="border rounded p-2 text-sm flex-1" />
+          <button class="text-red-500 hover:text-red-700 text-xs ml-2 remover-opcao">Remover</button>
+        </div>
+        <div class="flex items-center">
+          <input type="text" placeholder="Opção 2" class="border rounded p-2 text-sm flex-1" />
+          <button class="text-red-500 hover:text-red-700 text-xs ml-2 remover-opcao">Remover</button>
+        </div>
+      </div>
+
+      <button class="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 adicionar-opcao">
+        + Adicionar Opção
+      </button>
+    `;
+
+    listaEnquetes.appendChild(enqueteDiv);
+
+    // Botão de remover enquete
+    enqueteDiv.querySelector(".remover-enquete").addEventListener("click", () => {
+      enqueteDiv.remove();
+      if (listaEnquetes.children.length === 0) {
+        mensagemVaziaEnquete.classList.remove("hidden");
+        contadorEnquetes = 0;
+      }
+    });
+
+    // Função de adicionar/remover opções
+    const adicionarOpcaoBtn = enqueteDiv.querySelector(".adicionar-opcao");
+    const opcoesContainer = enqueteDiv.querySelector(".opcoes");
+
+    adicionarOpcaoBtn.addEventListener("click", () => {
+      const novaOpcao = document.createElement("div");
+      novaOpcao.className = "flex items-center";
+      novaOpcao.innerHTML = `
+        <input type="text" placeholder="Nova opção" class="border rounded p-2 text-sm flex-1" />
+        <button class="text-red-500 hover:text-red-700 text-xs ml-2 remover-opcao">Remover</button>
+      `;
+      opcoesContainer.appendChild(novaOpcao);
+
+      novaOpcao.querySelector(".remover-opcao").addEventListener("click", () => {
+        novaOpcao.remove();
+      });
+    });
+
+    // Ativar os botões de remover já existentes
+    enqueteDiv.querySelectorAll(".remover-opcao").forEach(botao => {
+      botao.addEventListener("click", () => botao.parentElement.remove());
+    });
+  });
+
+  const btnAdicionarGasto = document.getElementById("adicionar-gasto");
+  const listaGastos = document.getElementById("lista-gastos");
+  const mensagemGastosVazia = document.getElementById("mensagem-gastos-vazia");
+  const totalGastosDiv = document.getElementById("total-gastos");
+  const valorTotalSpan = document.getElementById("valor-total");
+
+  let total = 0;
+
+  // Formata número para R$ X,XX
+  const formatarMoeda = valor =>
+    valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  // Atualiza o total exibido
+  const atualizarTotal = () => {
+    valorTotalSpan.textContent = total.toFixed(2).replace(".", ",");
+    if (total > 0) totalGastosDiv.classList.remove("hidden");
+    else totalGastosDiv.classList.add("hidden");
+  };
+
+  btnAdicionarGasto.addEventListener("click", () => {
+    mensagemGastosVazia.classList.add("hidden");
+
+    const gastoDiv = document.createElement("div");
+    gastoDiv.className = "bg-white p-4 border rounded-xl shadow-sm flex items-center justify-between gap-3";
+
+    gastoDiv.innerHTML = `
+      <div class="flex-1 flex items-center gap-2">
+        <input type="text" placeholder="Descrição do gasto" class="border rounded p-2 text-sm flex-1" />
+        <input type="number" placeholder="Valor (R$)" min="0" step="0.01" class="border rounded p-2 text-sm w-28" />
+        <select class="border rounded p-2 text-sm">
+          <option value="">Categoria</option>
+          <option>Transporte</option>
+          <option>Alimentação</option>
+          <option>Hospedagem</option>
+          <option>Lazer</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded hover:bg-blue-600 salvar-gasto">Salvar</button>
+    `;
+
+    listaGastos.appendChild(gastoDiv);
+
+    // Quando o gasto é salvo
+    gastoDiv.querySelector(".salvar-gasto").addEventListener("click", () => {
+      const descricao = gastoDiv.querySelector("input[type='text']").value.trim();
+      const valor = parseFloat(gastoDiv.querySelector("input[type='number']").value);
+      const categoria = gastoDiv.querySelector("select").value;
+
+      if (!descricao || isNaN(valor) || valor <= 0) {
+        alert("Preencha uma descrição e um valor válido!");
+        return;
+      }
+
+      total += valor;
+      atualizarTotal();
+
+      // Substitui formulário por visualização fixa
+      gastoDiv.innerHTML = `
+        <div class="flex-1">
+          <p class="font-medium">${descricao}</p>
+          <p class="text-gray-500 text-sm">${categoria || "Sem categoria"}</p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-gray-700 font-semibold">${formatarMoeda(valor)}</span>
+          <button class="text-red-500 hover:text-red-700 text-sm remover-gasto">Remover</button>
+        </div>
+      `;
+
+      // Botão de remover gasto
+      gastoDiv.querySelector(".remover-gasto").addEventListener("click", () => {
+        total -= valor;
+        gastoDiv.remove();
+        atualizarTotal();
+
+        if (listaGastos.children.length === 0) {
+          mensagemGastosVazia.classList.remove("hidden");
+        }
+      });
+    });
+  });
+
+  const btnAdicionarTarefa = document.getElementById("adicionar-tarefa");
+  const listaTarefas = document.getElementById("lista-tarefas");
+  const mensagemTarefasVazia = document.getElementById("mensagem-tarefas-vazia");
+
+  btnAdicionarTarefa.addEventListener("click", () => {
+    mensagemTarefasVazia.classList.add("hidden");
+
+    const tarefaDiv = document.createElement("div");
+    tarefaDiv.className = "bg-white p-4 border rounded-xl shadow-sm flex items-center justify-between gap-3";
+
+    tarefaDiv.innerHTML = `
+      <div class="flex-1 flex items-center gap-2">
+        <input type="text" placeholder="Descrição da tarefa" class="border rounded p-2 text-sm flex-1" />
+        <select class="border rounded p-2 text-sm">
+          <option value="">Prioridade</option>
+          <option>Baixa</option>
+          <option>Média</option>
+          <option>Alta</option>
+        </select>
+      </div>
+      <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded hover:bg-blue-600 salvar-tarefa">Salvar</button>
+    `;
+
+    listaTarefas.appendChild(tarefaDiv);
+
+    // Quando o usuário salva a tarefa
+    tarefaDiv.querySelector(".salvar-tarefa").addEventListener("click", () => {
+      const descricao = tarefaDiv.querySelector("input").value.trim();
+      const prioridade = tarefaDiv.querySelector("select").value;
+
+      if (!descricao) {
+        alert("Digite uma descrição para a tarefa!");
+        return;
+      }
+
+      // Define cor do marcador conforme prioridade
+      const corPrioridade = {
+        "Baixa": "bg-green-400",
+        "Média": "bg-yellow-400",
+        "Alta": "bg-red-500"
+      }[prioridade] || "bg-gray-400";
+
+      tarefaDiv.innerHTML = `
+        <div class="flex items-center gap-3 flex-1">
+          <input type="checkbox" class="h-5 w-5 marcar-tarefa" />
+          <div>
+            <p class="descricao-tarefa font-medium">${descricao}</p>
+            <p class="text-sm text-gray-500 flex items-center gap-1">
+              <span class="w-3 h-3 inline-block rounded-full ${corPrioridade}"></span>
+              ${prioridade || "Sem prioridade"}
+            </p>
+          </div>
+        </div>
+        <button class="text-red-500 hover:text-red-700 text-sm remover-tarefa">Remover</button>
+      `;
+
+      // Marcar tarefa como concluída
+      const checkbox = tarefaDiv.querySelector(".marcar-tarefa");
+      const descricaoEl = tarefaDiv.querySelector(".descricao-tarefa");
+      checkbox.addEventListener("change", () => {
+        if (checkbox.checked) {
+          descricaoEl.classList.add("line-through", "text-gray-400");
+        } else {
+          descricaoEl.classList.remove("line-through", "text-gray-400");
+        }
+      });
+
+      // Remover tarefa
+      tarefaDiv.querySelector(".remover-tarefa").addEventListener("click", () => {
+        tarefaDiv.remove();
+        if (listaTarefas.children.length === 0) {
+          mensagemTarefasVazia.classList.remove("hidden");
+        }
+      });
+    });
+  });
+
+  const btnAdicionarMembro = document.getElementById("adicionar-membro");
+  const listaMembros = document.getElementById("lista-membros");
+  const mensagemMembrosVazia = document.getElementById("mensagem-membros-vazia");
+
+  btnAdicionarMembro.addEventListener("click", () => {
+    mensagemMembrosVazia.classList.add("hidden");
+
+    const membroDiv = document.createElement("div");
+    membroDiv.className = "bg-white p-4 border rounded-xl shadow-sm flex items-center justify-between gap-3";
+
+    membroDiv.innerHTML = `
+      <div class="flex-1 flex items-center gap-2">
+        <input type="text" placeholder="Nome do membro" class="border rounded p-2 text-sm flex-1" />
+        <input type="text" placeholder="Função (ex: organizador)" class="border rounded p-2 text-sm flex-1" />
+      </div>
+      <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded hover:bg-blue-600 salvar-membro">Salvar</button>
+    `;
+
+    listaMembros.appendChild(membroDiv);
+
+    // Quando o usuário salva o membro
+    membroDiv.querySelector(".salvar-membro").addEventListener("click", () => {
+      const nome = membroDiv.querySelectorAll("input")[0].value.trim();
+      const funcao = membroDiv.querySelectorAll("input")[1].value.trim();
+
+      if (!nome) {
+        alert("Digite o nome do membro!");
+        return;
+      }
+
+      membroDiv.innerHTML = `
+        <div class="flex-1">
+          <p class="font-medium">${nome}</p>
+          <p class="text-gray-500 text-sm">${funcao || "Sem função definida"}</p>
+        </div>
+        <button class="text-red-500 hover:text-red-700 text-sm remover-membro">Remover</button>
+      `;
+
+      // Remover membro
+      membroDiv.querySelector(".remover-membro").addEventListener("click", () => {
+        membroDiv.remove();
+        if (listaMembros.children.length === 0) {
+          mensagemMembrosVazia.classList.remove("hidden");
+        }
+      });
+    });
+  });
 
     // Sidebar interativa
     function toggleSidebar() {
