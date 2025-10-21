@@ -96,42 +96,86 @@
   </div>
 </div>
 
-    <!-- Dashboard original e abas -->
-    <div class="bg-white rounded-2xl shadow p-6">
-      <div class="flex flex-wrap gap-4 border-b pb-2 mb-6">
-        <button class="tab-btn text-blue-600 font-semibold border-b-2 border-blue-600 pb-2" data-tab="roteiro">Roteiro</button>
-        <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="enquetes">Enquetes</button>
-        <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="gastos">Gastos</button>
-        <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="tarefas">Tarefas</button>
-        <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="membros">Membros</button>
-      </div>
+   <!-- Dashboard original e abas -->
+<div class="bg-white rounded-2xl shadow p-6">
+  <div class="flex flex-wrap gap-4 border-b pb-2 mb-6">
+    <button class="tab-btn text-blue-600 font-semibold border-b-2 border-blue-600 pb-2" data-tab="roteiro">Roteiro</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="enquetes">Enquetes</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="gastos">Gastos</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="tarefas">Tarefas</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="membros">Membros</button>
+  </div>
 
-      <div id="roteiro" class="tab-content">
-  <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="roteiro-container">
-    <h2 class="text-xl font-semibold mb-3">Roteiro da Viagem</h2>
+  <!-- ABA ROTEIRO -->
+  <div id="roteiro" class="tab-content">
+    <div id="roteiro-container" class="bg-gray-50 border rounded-2xl p-6 text-center" data-room-id="{{ sala.id }}">
+      <h2 class="text-xl font-semibold mb-3">Roteiro da Viagem</h2>
 
-    {% if roteiros %}
-      <div id="dias-container" class="space-y-6 text-left">
+    <!-- Formulário de adicionar/editar mais harmonioso -->
+<div id="form-roteiro" class="hidden mt-4 bg-white p-6 rounded-lg shadow">
+  <input type="hidden" id="roteiro-id" value="">
+
+  <!-- Linha com data e horários -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    <div class="flex flex-col">
+      <label for="dia-input" class="text-gray-600 text-sm mb-1">Data</label>
+      <input type="date" id="dia-input" class="border p-2 rounded w-full">
+    </div>
+
+    <div class="flex flex-col">
+      <label for="hora-inicio-input" class="text-gray-600 text-sm mb-1">Horário início</label>
+      <input type="time" id="hora-inicio-input" class="border p-2 rounded w-full">
+    </div>
+
+    <div class="flex flex-col">
+      <label for="hora-fim-input" class="text-gray-600 text-sm mb-1">Horário fim</label>
+      <input type="time" id="hora-fim-input" class="border p-2 rounded w-full">
+    </div>
+  </div>
+
+  <!-- Descrição ocupa toda a largura -->
+  <div class="flex flex-col mb-4">
+    <label for="descricao-input" class="text-gray-600 text-sm mb-1">Descrição da atividade</label>
+    <textarea id="descricao-input" class="border p-2 rounded w-full" rows="3" placeholder="Descrição da atividade"></textarea>
+  </div>
+
+  <!-- Botões -->
+  <div class="flex justify-end gap-2">
+    <button id="salvar-dia" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Salvar</button>
+    <button id="cancelar-dia" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
+  </div>
+</div>
+
+
+      <!-- Lista de dias do roteiro -->
+      <div id="dias-container" class="space-y-4 text-left mt-4">
         {% for r in roteiros %}
-          <div class="bg-white border rounded-xl p-4 shadow-sm">
-            <p class="text-gray-700 font-semibold">{{ r.dia.strftime('%d/%m/%Y') }}</p>
-            <p class="text-gray-600">{{ r.descricao }}</p>
-            {% if r.horario_inicio %}
-              <p class="text-sm text-gray-500">⏰ {{ r.horario_inicio }} - {{ r.horario_fim or '' }}</p>
-            {% endif %}
+          <div class="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow hover:shadow-md transition flex justify-between items-start">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <p class="text-gray-700 font-semibold">📅 {{ r.dia.strftime('%d/%m/%Y') }}</p>
+                {% if r.horario_inicio %}
+                  <p class="text-sm text-gray-500">⏰ {{ r.horario_inicio }} - {{ r.horario_fim or '--:--' }}</p>
+                {% endif %}
+              </div>
+              <p class="text-gray-600">{{ r.descricao }}</p>
+            </div>
+            <div class="flex flex-col gap-2 ml-4">
+              
+              <button class="delete-dia bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" data-id="{{ r.id }}">
+                Excluir
+              </button>
+            </div>
           </div>
         {% endfor %}
       </div>
-    {% else %}
-      <p id="mensagem-vazia" class="text-gray-500 mb-6">Nenhum dia adicionado ao roteiro ainda.</p>
-    {% endif %}
 
-    <button id="adicionar-dia"
-      class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
-      + Adicionar Dia
-    </button>
+      <!-- Botão de adicionar dia -->
+      <button id="adicionar-dia" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+        + Adicionar Dia
+      </button>
+    </div>
   </div>
-</div>
 
 
       <!-- Enquetes -->
@@ -522,6 +566,159 @@
     document.getElementById('userInitial').textContent = user.name.charAt(0).toUpperCase();
 
     function logout(){ alert('Logout realizado'); }
+
+    const adicionarBtn = document.getElementById('adicionar-dia');
+const formRoteiro = document.getElementById('form-roteiro');
+const salvarBtn = document.getElementById('salvar-dia');
+const cancelarBtn = document.getElementById('cancelar-dia');
+
+const roomContainer = document.getElementById('roteiro-container');
+const roomId = roomContainer.dataset.roomId; // pega o ID da sala do atributo HTML
+
+adicionarBtn.addEventListener('click', () => formRoteiro.classList.remove('hidden'));
+
+cancelarBtn.addEventListener('click', () => {
+  formRoteiro.classList.add('hidden');
+  document.getElementById('dia-input').value = '';
+  document.getElementById('hora-inicio-input').value = '';
+  document.getElementById('hora-fim-input').value = '';
+  document.getElementById('descricao-input').value = '';
+});
+
+salvarBtn.addEventListener('click', async () => {
+  const dia = document.getElementById('dia-input').value;
+  const horario_inicio = document.getElementById('hora-inicio-input').value;
+  const horario_fim = document.getElementById('hora-fim-input').value;
+  const descricao = document.getElementById('descricao-input').value;
+
+  if (!dia || !descricao) {
+    alert("Preencha pelo menos a data e a descrição!");
+    return;
+  }
+
+  const response = await fetch('/adicionar_roteiro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      room_id: roomId,
+      dia: dia,
+      horario_inicio: horario_inicio,
+      horario_fim: horario_fim,
+      descricao: descricao
+    })
+  });
+
+  if (response.ok) location.reload();
+  else alert("Erro ao salvar roteiro");
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('form-roteiro'); // seu formulário existente
+  const roteiroIdInput = document.getElementById('roteiro-id'); // campo hidden que você já tem ou cria
+  const cancelarBtn = document.getElementById('cancelar-edicao') || null;
+  const salvarBtn = document.getElementById('salvar-roteiro');
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+  const form = document.getElementById('form-roteiro');
+  const roteiroIdInput = document.getElementById('roteiro-id');
+  const diaInput = document.getElementById('dia-input');
+  const descricaoInput = document.getElementById('descricao-input');
+  const horaInicioInput = document.getElementById('hora-inicio-input');
+  const horaFimInput = document.getElementById('hora-fim-input');
+  const salvarBtn = document.getElementById('salvar-dia');
+  const cancelarBtn = document.getElementById('cancelar-dia');
+  const diasContainer = document.getElementById('dias-container');
+  const roomId = document.getElementById('roteiro-container').dataset.roomId;
+
+  // === Editar roteiro ===
+  diasContainer.querySelectorAll('.edit-dia').forEach(button => {
+    button.addEventListener('click', () => {
+      // Preenche o formulário com os dados do roteiro selecionado
+      roteiroIdInput.value = button.dataset.id;
+      diaInput.value = button.dataset.dia;
+      descricaoInput.value = button.dataset.descricao;
+      horaInicioInput.value = button.dataset.inicio;
+      horaFimInput.value = button.dataset.fim;
+
+      // Altera o texto do botão e mostra o formulário
+      salvarBtn.textContent = 'Atualizar Roteiro';
+      cancelarBtn.classList.remove('hidden');
+      form.classList.remove('hidden');
+      form.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // === Cancelar edição ===
+  cancelarBtn.addEventListener('click', () => {
+    roteiroIdInput.value = '';
+    diaInput.value = '';
+    descricaoInput.value = '';
+    horaInicioInput.value = '';
+    horaFimInput.value = '';
+    salvarBtn.textContent = 'Adicionar Roteiro';
+    cancelarBtn.classList.add('hidden');
+    form.classList.add('hidden');
+  });
+
+  // === Salvar edição ===
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const roteiroId = roteiroIdInput.value;
+    if (!roteiroId) return; // Se não for edição, o fluxo de adicionar já cuida
+
+    const payload = {
+      dia: diaInput.value,
+      descricao: descricaoInput.value,
+      inicio: horaInicioInput.value,
+      fim: horaFimInput.value
+    };
+
+    try {
+      const res = await fetch(`/editar_roteiro/${roteiroId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Erro ao atualizar roteiro.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao atualizar roteiro.');
+    }
+  });
+
+});
+
+  // === Excluir roteiro ===
+  document.querySelectorAll('.delete-dia').forEach(button => {
+    button.addEventListener('click', async () => {
+      if (!confirm('Tem certeza que deseja excluir este roteiro?')) return;
+      const id = button.dataset.id;
+
+      try {
+        const response = await fetch('/excluir_roteiro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `id=${encodeURIComponent(id)}`
+        });
+        const data = await response.json();
+        alert(data.message);
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao excluir roteiro.');
+      }
+    });
+  });
+});
+</script>
+
   </script>
 </body>
 </html>
