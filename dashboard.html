@@ -458,7 +458,7 @@ function renderRooms() {
         <p class="text-gray-600 mb-1 room-dates">
   📅 ${formatDate(room.start_date || room.startDate)} - ${formatDate(room.end_date || room.endDate)}
 </p>
-
+<!-- aqui -->
         <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
           Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
         </div>
@@ -467,8 +467,10 @@ function renderRooms() {
         </button>
       `;
       roomCard.querySelector('.enter-room').addEventListener('click', () => {
-        window.location.href = 'sala.html';
-      });
+  const roomId = room.id || room.room_id; // tenta ambos os nomes
+  window.location.href = `/sala/${roomId}`;
+});
+
       roomsContainer.appendChild(roomCard);
     });
   }
