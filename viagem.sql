@@ -190,7 +190,26 @@ CREATE TABLE IF NOT EXISTS user_rooms (
     FOREIGN KEY (user_id) REFERENCES usuarios(id_usuario),
     FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
+CREATE TABLE roteiros (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    dia DATE NOT NULL,
+    descricao TEXT,
+    horario_inicio TIME,
+    horario_fim TIME,
+    FOREIGN KEY (room_id) REFERENCES rooms(id)
+);
 
 --------------------------------------
 select * from usuarios;
 select * from rooms;
+select * from user_rooms;
+-- Suponha que exista user_id = 1 e room_id = 1
+SELECT * FROM usuarios WHERE id_usuario = 1;
+SELECT * FROM rooms WHERE id = 1;
+INSERT INTO user_rooms (user_id, room_id) VALUES (1, 1);
+-- Supondo que existe um usuário com id = 1
+-- e uma sala com id = 3
+INSERT INTO user_rooms (user_id, room_id) VALUES (1, 3);
+
+
