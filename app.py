@@ -478,5 +478,37 @@ def excluir_roteiro():
 
     return jsonify({'message': 'Roteiro excluído com sucesso!'})
 
+
+@app.route("/tarefas/<int:room_id>", methods=["GET"])
+@login_required
+def listar_tarefas_room(room_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Tarefas da sala
+    cursor.execute("""
+        SELECT t.id, t.descricao, t.responsavel_id, u.nome AS responsavel_nome, t.status
+        FROM tarefas t
+        LEFT JOIN usuarios u ON t.responsavel_id = u.id_usuario
+        WHERE t.room_id = %s
+        ORDER BY t.created_at ASC
+    """, (room_id,))
+    tarefas = cursor.fetchall()
+
+    # Usuários da sala
+    cursor.execute("""
+        SELECT u.id_usuario, u.nome
+        FROM user_rooms ur
+        JOIN usuarios u ON ur.user_id = u.id_usuario
+        WHERE ur.room_id = %s
+    """, (room_id,))
+    usuarios_sala = cursor.fetchall()
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({"tarefas": tarefas, "usuarios_sala": usuarios_sala})
+
+
 if __name__ == "__main__":
     app.run(debug=True)
