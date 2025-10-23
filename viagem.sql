@@ -199,11 +199,33 @@ CREATE TABLE roteiros (
     horario_fim TIME,
     FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
+CREATE TABLE tarefas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    descricao TEXT NOT NULL,
+    responsavel_id INT DEFAULT NULL,
+    status ENUM('pendente', 'em andamento', 'concluida') DEFAULT 'pendente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id),
+    FOREIGN KEY (responsavel_id) REFERENCES usuarios(id)
+);
+CREATE TABLE tarefas (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    descricao TEXT NOT NULL,
+    responsavel_id INT DEFAULT NULL,
+    status ENUM('pendente', 'em andamento', 'concluida') DEFAULT 'pendente',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id),
+    FOREIGN KEY (responsavel_id) REFERENCES usuarios(id_usuario)
+);
 
 --------------------------------------
 select * from usuarios;
 select * from rooms;
 select * from user_rooms;
+select * from roteiros;
+select * from tarefas;
 -- Suponha que exista user_id = 1 e room_id = 1
 SELECT * FROM usuarios WHERE id_usuario = 1;
 SELECT * FROM rooms WHERE id = 1;
