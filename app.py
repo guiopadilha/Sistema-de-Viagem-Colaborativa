@@ -363,12 +363,7 @@ def pagina_sala_123():
     return render_template('sala.html')
 @app.route('/sala/<int:room_id>')
 def pagina_sala_especifica(room_id):
-    conn = mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='12345678',
-        database='viagens_colegas'
-    )
+    conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
     # Buscar dados da sala
@@ -401,8 +396,10 @@ def pagina_sala_especifica(room_id):
         'sala.html',
         sala=sala,
         participantes=participantes,
-        roteiros=roteiros
+        roteiros=roteiros,
+        room_id=room_id   # 🔹 adicionando aqui
     )
+
 
 @app.route('/adicionar_roteiro', methods=['POST'])
 def adicionar_roteiro():
@@ -508,6 +505,103 @@ def listar_tarefas_room(room_id):
     conn.close()
 
     return jsonify({"tarefas": tarefas, "usuarios_sala": usuarios_sala})
+
+# Função de conexão
+def get_db_connection():
+    return mysql.connector.connect(
+        host='localhost',
+        user='root',
+        password='12345678',
+        database='viagens_colegas'
+    )
+
+# 📥 Adicionar gasto
+@app.route("/add_gasto", methods=["POST"])
+def add_gasto():
+    # Recebe dados via form-data
+    room_id = request.form.get("room_id")
+    descricao = request.form.get("descricao")
+    valor = request.form.get("valor")
+    data_gasto = request.form.get("data_gasto")
+    categoria = request.form.get("categoria")
+    pago_por = request.form.get("pago_por") or ""
+
+    # Validação mínima
+    if not room_id or not descricao or not valor or not data_gasto:
+        return jsonify({"status": "error", "message": "Preencha todos os campos obrigatórios."}), 400
+
+    try:
+        # Conversão de tipos
+        room_id = int(room_id)
+        valor = float(valor)
+    except ValueError:
+        return jsonify({"status": "error", "message": "Valores inválidos para room_id ou valor."}), 400
+
+    # Inserção no banco
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO gastos (room_id, descricao, valor, data_gasto, categoria, pago_por)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (room_id, descricao, valor, data_gasto, categoria, pago_por))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"status": "success", "message": "Gasto adicionado com sucesso!"})
+
+# 📤 Listar gastos
+@app.route("/get_gastos/<int:room_id>")
+def get_gastos(room_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("""
+        SELECT *
+        FROM gastos
+        WHERE room_id = %s
+        ORDER BY data_gasto DESC
+    """, (room_id,))
+    gastos = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(gastos)
+
+@app.route("/excluir_gasto", methods=["POST"])
+def excluir_gasto():
+    gasto_id = request.form.get("id")
+    
+    if not gasto_id:
+        return jsonify({"status": "error", "message": "ID do gasto não fornecido"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM gastos WHERE id = %s", (gasto_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({"status": "success", "message": "Gasto excluído com sucesso!"})
+@app.route("/tempo_real")
+def tempo_real():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Conta o total de roteiros
+    cursor.execute("SELECT COUNT(*) AS total FROM roteiros")
+    total_roteiros = cursor.fetchone()["total"] or 0
+
+    # Soma o total de gastos
+    cursor.execute("SELECT SUM(valor) AS total FROM gastos")
+    total_gastos = cursor.fetchone()["total"] or 0
+
+    cursor.close()
+    conn.close()
+
+    return render_template(
+        "tempo_real.html",
+        total_roteiros=total_roteiros,
+        total_gastos=total_gastos
+    )
 
 
 if __name__ == "__main__":
