@@ -219,6 +219,18 @@ CREATE TABLE tarefas (
     FOREIGN KEY (room_id) REFERENCES rooms(id),
     FOREIGN KEY (responsavel_id) REFERENCES usuarios(id_usuario)
 );
+CREATE TABLE gastos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    descricao VARCHAR(255) NOT NULL,
+    valor DECIMAL(10,2) NOT NULL,
+    data_gasto DATE NOT NULL,
+    categoria VARCHAR(100),
+    pago_por VARCHAR(100),
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id)
+);
+
 
 --------------------------------------
 select * from usuarios;
@@ -226,6 +238,10 @@ select * from rooms;
 select * from user_rooms;
 select * from roteiros;
 select * from tarefas;
+select * from gastos;
+INSERT INTO gastos (room_id, descricao, valor, data_gasto, categoria, pago_por)
+VALUES (1, 'Teste de gasto', 150.75, '2025-10-27', 'Alimentação', 'Lucas');
+
 -- Suponha que exista user_id = 1 e room_id = 1
 SELECT * FROM usuarios WHERE id_usuario = 1;
 SELECT * FROM rooms WHERE id = 1;
@@ -233,5 +249,7 @@ INSERT INTO user_rooms (user_id, room_id) VALUES (1, 1);
 -- Supondo que existe um usuário com id = 1
 -- e uma sala com id = 3
 INSERT INTO user_rooms (user_id, room_id) VALUES (1, 3);
+INSERT INTO gastos (room_id, descricao, valor, data_gasto, categoria, pago_por)
+VALUES (2, 'Teste de gasto', 150.75, '2025-10-27', 'Alimentação', 'Lucas');
 
 
