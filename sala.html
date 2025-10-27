@@ -849,6 +849,88 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 
+<style>
+  /* Responsividade adicional sem alterar layout existente */
+  @media (max-width: 768px) {
+    /* Sidebar ocupa a tela toda quando aberta */
+    #sidebar {
+      width: 80%;
+      max-width: 320px;
+    }
+
+    /* Corrige largura do main ao fechar menu */
+    main {
+      margin-left: 0 !important;
+      padding: 1rem;
+    }
+
+    /* Ajustes dos cards e botões */
+    #trip-container .flex,
+    .tab-btns,
+    .tab-content .flex {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+    }
+
+    /* Textos menores no mobile */
+    h2, h3 {
+      font-size: 1rem !important;
+    }
+
+    button, input, select, textarea {
+      font-size: 0.9rem !important;
+    }
+
+    /* Espaçamento nos botões */
+    .tab-btn {
+      flex: 1 1 45%;
+      text-align: center;
+    }
+
+    /* Modal de gastos responsivo */
+    #modal-gasto > div {
+      width: 90%;
+      max-width: 400px;
+    }
+
+    /* Cards e listas */
+    #dias-container > div,
+    #lista-gastos > div,
+    #lista-enquetes > div,
+    #lista-tarefas > div {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 8px;
+    }
+
+    /* Ajuste para grid de inputs */
+    #form-roteiro .grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      font-size: 0.9rem;
+    }
+
+    .rounded-2xl {
+      border-radius: 1rem !important;
+    }
+
+    #trip-container h2 {
+      font-size: 1.1rem !important;
+    }
+
+    #trip-container p {
+      font-size: 0.9rem !important;
+    }
+
+    button {
+      padding: 0.5rem 0.8rem !important;
+    }
+  }
+</style>
 
 </body>
 </html>
