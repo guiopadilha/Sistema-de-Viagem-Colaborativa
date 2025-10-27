@@ -193,18 +193,42 @@
 
       <!-- Gastos -->
       <div id="gastos" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="gastos-container">
-          <h2 class="text-xl font-semibold mb-3">Controle de Gastos</h2>
-          <p id="mensagem-gastos-vazia" class="text-gray-500 mb-6">Nenhum gasto registrado ainda.</p>
-          <div id="lista-gastos" class="space-y-4 text-left"></div>
-          <div id="total-gastos" class="hidden mt-6 text-lg font-semibold text-gray-700">
-            Total: R$ <span id="valor-total">0,00</span>
-          </div>
-          <button id="adicionar-gasto" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
-            + Adicionar Gasto
-          </button>
-        </div>
+  <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="gastos-container">
+    <h2 class="text-xl font-semibold mb-3">Controle de Gastos</h2>
+
+    <div id="lista-gastos" class="space-y-4 text-left"></div>
+    <div id="total-gastos" class="mt-6 text-lg font-semibold text-gray-700 hidden">
+      Total: <span id="valor-total">R$ 0,00</span>
+    </div>
+
+    <button id="abrir-modal-gasto" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Gasto
+    </button>
+  </div>
+
+  <!-- MODAL DE NOVO GASTO -->
+  <div id="modal-gasto" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-96">
+      <h3 class="text-lg font-semibold mb-4">Novo Gasto</h3>
+      <input type="text" id="descricao" placeholder="Descrição do gasto" class="border rounded p-2 w-full mb-3">
+      <input type="number" id="valor" placeholder="Valor (R$)" class="border rounded p-2 w-full mb-3">
+      <input type="date" id="data_gasto" class="border rounded p-2 w-full mb-3">
+      <select id="categoria" class="border rounded p-2 w-full mb-3">
+        <option value="">Categoria</option>
+        <option>Transporte</option>
+        <option>Alimentação</option>
+        <option>Hospedagem</option>
+        <option>Lazer</option>
+        <option>Outros</option>
+      </select>
+      <input type="text" id="pago_por" placeholder="Pago por" class="border rounded p-2 w-full mb-3">
+      <div class="flex justify-end gap-2">
+        <button id="fechar-modal" class="bg-gray-300 px-4 py-2 rounded">Cancelar</button>
+        <button id="salvar-gasto" class="bg-emerald-500 text-white px-4 py-2 rounded">Adicionar</button>
       </div>
+    </div>
+  </div>
+</div>
 
       <!-- Tarefas -->
       <!-- Tarefas -->
@@ -408,76 +432,121 @@
 
     // -------------------------
     // Gastos
-    const btnAdicionarGasto = document.getElementById("adicionar-gasto");
-    const listaGastos = document.getElementById("lista-gastos");
-    const mensagemGastosVazia = document.getElementById("mensagem-gastos-vazia");
-    const totalGastosDiv = document.getElementById("total-gastos");
-    const valorTotalSpan = document.getElementById("valor-total");
-    let total = 0;
+const currentRoomId = "{{ room_id }}";
 
-    const formatarMoeda = valor =>
-      valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const listaGastos = document.getElementById("lista-gastos");
+const valorTotalSpan = document.getElementById("valor-total");
+const totalDiv = document.getElementById("total-gastos");
+let total = 0;
 
-    const atualizarTotal = () => {
-      valorTotalSpan.textContent = total.toFixed(2).replace(".", ",");
-      total > 0 ? totalGastosDiv.classList.remove("hidden") : totalGastosDiv.classList.add("hidden");
-    };
+function formatarMoeda(v) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
-    btnAdicionarGasto.addEventListener("click", () => {
-      mensagemGastosVazia.classList.add("hidden");
+async function carregarGastos() {
+  const res = await fetch(`/get_gastos/${currentRoomId}`);
+  const dados = await res.json();
+  listaGastos.innerHTML = "";
+  total = 0;
 
-      const gastoDiv = document.createElement("div");
-      gastoDiv.className = "bg-white p-4 border rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3";
-      gastoDiv.innerHTML = `
-        <div class="flex-1 flex flex-wrap gap-2 md:gap-3 items-center">
-          <input type="text" placeholder="Descrição do gasto" class="border rounded p-2 text-sm flex-1" />
-          <input type="number" placeholder="Valor (R$)" min="0" step="0.01" class="border rounded p-2 text-sm w-28" />
-          <select class="border rounded p-2 text-sm">
-            <option value="">Categoria</option>
-            <option>Transporte</option>
-            <option>Alimentação</option>
-            <option>Hospedagem</option>
-            <option>Lazer</option>
-            <option>Outros</option>
-          </select>
-        </div>
-        <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded hover:bg-blue-600 salvar-gasto">Salvar</button>
-      `;
-      listaGastos.appendChild(gastoDiv);
+  if (dados.length === 0) {
+    listaGastos.innerHTML = "<p class='text-gray-500'>Nenhum gasto registrado ainda.</p>";
+    totalDiv.classList.add("hidden");
+    return;
+  }
 
-      gastoDiv.querySelector(".salvar-gasto").addEventListener("click", () => {
-        const descricao = gastoDiv.querySelector("input[type='text']").value.trim();
-        const valor = parseFloat(gastoDiv.querySelector("input[type='number']").value);
-        const categoria = gastoDiv.querySelector("select").value;
+  dados.forEach(g => {
+    total += parseFloat(g.valor);
+    const div = document.createElement("div");
+    div.className = "bg-white p-4 border rounded-xl shadow-sm flex justify-between items-center";
+    div.innerHTML = `
+      <div>
+        <p class="font-medium">${g.descricao}</p>
+        <p class="text-gray-500 text-sm">${g.categoria || "Outros"} — Pago por ${g.pago_por || "N/A"}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-semibold">${formatarMoeda(parseFloat(g.valor))}</span>
+        <button class="bg-red-500 text-white px-2 py-1 rounded excluir-gasto" data-id="${g.id}">Excluir</button>
+      </div>
+    `;
+    listaGastos.appendChild(div);
+});
 
-        if (!descricao || isNaN(valor) || valor <= 0) {
-          alert("Preencha uma descrição e um valor válido!");
-          return;
-        }
 
-        total += valor;
-        atualizarTotal();
+  valorTotalSpan.textContent = formatarMoeda(total);
+  totalDiv.classList.remove("hidden");
+}
 
-        gastoDiv.innerHTML = `
-          <div class="flex-1">
-            <p class="font-medium">${descricao}</p>
-            <p class="text-gray-500 text-sm">${categoria || "Sem categoria"}</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <span class="text-gray-700 font-semibold">${formatarMoeda(valor)}</span>
-            <button class="text-red-500 hover:text-red-700 text-sm remover-gasto">Remover</button>
-          </div>
-        `;
+// --- Modal ---
+const modal = document.getElementById("modal-gasto");
+document.getElementById("abrir-modal-gasto").onclick = () => modal.classList.remove("hidden");
+document.getElementById("fechar-modal").onclick = () => modal.classList.add("hidden");
 
-        gastoDiv.querySelector(".remover-gasto").addEventListener("click", () => {
-          total -= valor;
-          gastoDiv.remove();
-          atualizarTotal();
-          if (listaGastos.children.length === 0) mensagemGastosVazia.classList.remove("hidden");
-        });
-      });
+// --- Salvar gasto ---
+document.getElementById("salvar-gasto").onclick = async () => {
+  const descricao = document.getElementById("descricao").value.trim();
+  const valor = document.getElementById("valor").value;
+  const data_gasto = document.getElementById("data_gasto").value;
+  const categoria = document.getElementById("categoria").value;
+  const pago_por = document.getElementById("pago_por").value.trim();
+
+  if (!descricao || !valor || parseFloat(valor) <= 0 || !data_gasto) {
+    alert("Preencha todos os campos obrigatórios!");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("room_id", currentRoomId);
+  formData.append("descricao", descricao);
+  formData.append("valor", valor);
+  formData.append("data_gasto", data_gasto);
+  formData.append("categoria", categoria);
+  formData.append("pago_por", pago_por);
+
+  const resp = await fetch("/add_gasto", {
+    method: "POST",
+    body: formData
+  });
+
+  if (resp.ok) {
+    modal.classList.add("hidden");
+    // limpa campos do modal
+    document.getElementById("descricao").value = "";
+    document.getElementById("valor").value = "";
+    document.getElementById("data_gasto").value = "";
+    document.getElementById("categoria").value = "";
+    document.getElementById("pago_por").value = "";
+    carregarGastos();
+  } else {
+    const erro = await resp.json();
+    alert("Erro ao salvar gasto: " + (erro.message || "Desconhecido"));
+  }
+};
+// Delegação de evento para excluir gasto
+listaGastos.addEventListener("click", async (e) => {
+    if (!e.target.classList.contains("excluir-gasto")) return;
+
+    const id = e.target.dataset.id;
+    if (!confirm("Tem certeza que deseja excluir este gasto?")) return;
+
+    const formData = new FormData();
+    formData.append("id", id);
+
+    const resp = await fetch("/excluir_gasto", {
+        method: "POST",
+        body: formData
     });
 
+    const data = await resp.json();
+    if (data.status === "success") {
+        carregarGastos(); // atualiza a lista
+    } else {
+        alert("Erro ao excluir gasto: " + (data.message || "Desconhecido"));
+    }
+});
+
+// Carrega os gastos ao abrir a página
+carregarGastos();
     // -------------------------
     // Tarefas
  document.addEventListener("DOMContentLoaded", () => {
@@ -780,6 +849,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 
-  </script>
+
 </body>
 </html>
