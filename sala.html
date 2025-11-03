@@ -179,17 +179,38 @@
   </div>
 
 
-      <!-- Enquetes -->
-      <div id="enquetes" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="enquetes-container">
-          <h2 class="text-xl font-semibold mb-3">Enquetes da Viagem</h2>
-          <p id="mensagem-enquete-vazia" class="text-gray-500 mb-6">Nenhuma enquete criada ainda.</p>
-          <div id="lista-enquetes" class="space-y-6 text-left"></div>
-          <button id="adicionar-enquete" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
-            + Criar Enquete
-          </button>
-        </div>
+<!-- ========== ABA: ENQUETES ========== -->
+<!-- ABA ENQUETES -->
+<div id="enquetes" class="tab-content hidden" data-room-id="{{ room_id }}">
+  <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="enquetes-container">
+    <h2 class="text-xl font-semibold mb-3">Enquetes da Viagem</h2>
+    <p id="mensagem-enquete-vazia" class="text-gray-500 mb-6">Nenhuma enquete criada ainda.</p>
+
+    <!-- Lista de enquetes existentes -->
+    <div id="lista-enquetes" class="space-y-6 text-left"></div>
+
+    <!-- Formulário de criação de enquete (inicialmente escondido) -->
+    <div id="form-criar-enquete" class="hidden mt-6 bg-white p-4 rounded-xl shadow-md">
+      <input id="input-pergunta" type="text" placeholder="Digite a pergunta" class="w-full mb-3 p-2 border rounded" />
+      <textarea id="input-descricao" placeholder="Descrição (opcional)" class="w-full mb-3 p-2 border rounded"></textarea>
+      
+      <div id="opcoes-container" class="mb-3">
+        <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 1" />
+        <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 2" />
       </div>
+      <button id="adicionar-opcao" class="mb-3 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition">+ Adicionar opção</button>
+      <button id="adicionar-enquete" class="bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+        Salvar Enquete
+      </button>
+    </div>
+
+    <!-- Botão para abrir o formulário -->
+    <button id="btn-nova-enquete" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Criar Enquete
+    </button>
+  </div>
+</div>
+
 
       <!-- Gastos -->
       <div id="gastos" class="tab-content hidden">
@@ -290,6 +311,31 @@
         </div>
       </div>
     </div>
+
+<!-- ========== MODAL: CRIAR ENQUETE (fora da aba, no fim do body) ========== -->
+<div id="modal-enquete" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-96 shadow">
+    <h2 class="text-lg font-bold mb-3">Criar Enquete</h2>
+
+    <input id="titulo-enquete" type="text" placeholder="Título" class="w-full border p-2 mb-2 rounded" />
+    <textarea id="descricao-enquete" placeholder="Descrição (opcional)" class="w-full border p-2 mb-2 rounded"></textarea>
+
+    <div id="opcoes-container" class="mb-2">
+      <input type="text" class="opcao-input w-full border p-2 mb-2 rounded" placeholder="Opção 1" />
+      <input type="text" class="opcao-input w-full border p-2 mb-2 rounded" placeholder="Opção 2" />
+    </div>
+
+    <div class="flex items-center gap-2 mb-3">
+      <button id="add-opcao" class="bg-gray-200 px-3 py-1 rounded text-sm">+ Opção</button>
+      <button id="limpar-opcoes" class="bg-gray-100 px-3 py-1 rounded text-sm">Limpar</button>
+    </div>
+
+    <div class="flex justify-between mt-3">
+      <button id="fechar-modal-enquete" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar</button>
+      <button id="salvar-enquete" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>
+    </div>
+  </div>
+</div>
   <script>
     // Interatividade das abas
     const tabs = document.querySelectorAll(".tab-btn");
@@ -362,73 +408,252 @@
 
     // -------------------------
     // Enquetes
-    const btnAdicionarEnquete = document.getElementById("adicionar-enquete");
-    const listaEnquetes = document.getElementById("lista-enquetes");
-    const mensagemVaziaEnquete = document.getElementById("mensagem-enquete-vazia");
-    let contadorEnquetes = 0;
 
-    btnAdicionarEnquete.addEventListener("click", () => {
-      mensagemVaziaEnquete.classList.add("hidden");
-      contadorEnquetes++;
+// ---------- Enquetes: bloco único, sem duplicação ----------
+// pega roomId do container
 
-      const enqueteDiv = document.createElement("div");
-      enqueteDiv.className = "bg-white p-4 border rounded-xl shadow-sm";
-      enqueteDiv.innerHTML = `
-        <div class="flex justify-between items-center mb-3">
-          <h3 class="text-lg font-semibold">Enquete ${contadorEnquetes}</h3>
-          <button class="text-red-500 hover:text-red-700 text-sm font-medium remover-enquete">Remover enquete</button>
-        </div>
-        <div class="mb-3">
-          <input type="text" placeholder="Pergunta da enquete (ex: Onde vamos jantar?)"
-            class="w-full border rounded p-2 text-sm" />
-        </div>
-        <div class="opcoes space-y-2 mb-3">
-          <div class="flex items-center">
-            <input type="text" placeholder="Opção 1" class="border rounded p-2 text-sm flex-1" />
-            <button class="text-red-500 hover:text-red-700 text-xs ml-2 remover-opcao">Remover</button>
-          </div>
-          <div class="flex items-center">
-            <input type="text" placeholder="Opção 2" class="border rounded p-2 text-sm flex-1" />
-            <button class="text-red-500 hover:text-red-700 text-xs ml-2 remover-opcao">Remover</button>
-          </div>
-        </div>
-        <button class="bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 adicionar-opcao">
-          + Adicionar Opção
-        </button>
-      `;
-      listaEnquetes.appendChild(enqueteDiv);
+document.addEventListener("DOMContentLoaded", () => {
+  const btnNovaEnquete = document.getElementById("btn-nova-enquete");
+  const formCriarEnquete = document.getElementById("form-criar-enquete");
+  const btnAdicionarOpcao = document.getElementById("adicionar-opcao");
+  const listaOpcoesContainer = document.getElementById("opcoes-container");
+  const btnSalvarEnquete = document.getElementById("adicionar-enquete");
+  const inputPergunta = document.getElementById("input-pergunta");
+  const inputDescricao = document.getElementById("input-descricao");
+  const listaEnquetes = document.getElementById("lista-enquetes");
+  const mensagemVazia = document.getElementById("mensagem-enquete-vazia");
+  const roomId = document.getElementById("enquetes").dataset.roomId;
 
-      // Remover enquete
-      enqueteDiv.querySelector(".remover-enquete").addEventListener("click", () => {
-        enqueteDiv.remove();
-        if (listaEnquetes.children.length === 0) {
-          mensagemVaziaEnquete.classList.remove("hidden");
-          contadorEnquetes = 0;
+  // Mostrar/ocultar formulário
+  btnNovaEnquete.addEventListener("click", () => {
+    formCriarEnquete.classList.remove("hidden");
+    btnNovaEnquete.classList.add("hidden");
+  });
+
+  // Adicionar nova opção
+  btnAdicionarOpcao.addEventListener("click", (e) => {
+    e.preventDefault();
+    const novaOpcao = document.createElement("input");
+    novaOpcao.type = "text";
+    novaOpcao.className = "opcao w-full mb-2 p-2 border rounded";
+    novaOpcao.placeholder = `Opção ${listaOpcoesContainer.querySelectorAll("input.opcao").length + 1}`;
+    listaOpcoesContainer.appendChild(novaOpcao);
+  });
+
+  // Coletar opções
+  function coletarOpcoes() {
+    const opcoes = [];
+    listaOpcoesContainer.querySelectorAll("input.opcao").forEach(input => {
+      if (input.value.trim() !== "") opcoes.push(input.value.trim());
+    });
+    return opcoes;
+  }
+
+  function criarCardEnquete(enquete) {
+  // Evita duplicar card
+  let card = document.getElementById(`enquete-${enquete.id}`);
+  if (!card) {
+    card = document.createElement("div");
+    card.id = `enquete-${enquete.id}`;
+    card.className = "enquete-card border p-3 rounded shadow mb-4";
+    listaEnquetes.appendChild(card);
+  } else {
+    card.innerHTML = ""; // limpa conteúdo existente
+  }
+
+  // Título
+  const titulo = document.createElement("h3");
+  titulo.className = "font-semibold";
+  titulo.textContent = enquete.titulo;
+  card.appendChild(titulo);
+
+  // Descrição
+  if (enquete.descricao) {
+    const descricao = document.createElement("p");
+    descricao.textContent = enquete.descricao;
+    card.appendChild(descricao);
+  }
+
+  // Lista de opções com botões de voto
+  const lista = document.createElement("ul");
+  lista.className = "list-disc pl-5 mb-2";
+
+  // Inicializa votos se não existir
+  if (!enquete.votos) enquete.votos = new Array(enquete.opcoes.length).fill(0);
+
+  enquete.opcoes.forEach((opcao, idx) => {
+    const item = document.createElement("li");
+    item.className = "mb-1 flex justify-between items-center";
+
+    const texto = document.createElement("span");
+    texto.textContent = `${opcao} (${enquete.votos[idx]} votos)`;
+    item.appendChild(texto);
+
+    if (enquete.status === "aberta") {
+      const btn = document.createElement("button");
+      btn.className = "ml-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600";
+      btn.textContent = "Votar";
+
+      btn.addEventListener("click", async () => {
+        try {
+          const resp = await fetch(`/votar_enquete/${enquete.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ opcao_idx: idx })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            enquete.votos[idx]++; // soma localmente
+            criarCardEnquete(enquete); // atualiza o card
+          } else {
+            alert("Erro ao registrar voto: " + data.message);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Erro de comunicação com o servidor.");
         }
       });
 
-      // Adicionar opção
-      const adicionarOpcaoBtn = enqueteDiv.querySelector(".adicionar-opcao");
-      const opcoesContainer = enqueteDiv.querySelector(".opcoes");
-      adicionarOpcaoBtn.addEventListener("click", () => {
-        const novaOpcao = document.createElement("div");
-        novaOpcao.className = "flex items-center gap-2";
-        novaOpcao.innerHTML = `
-          <input type="text" placeholder="Nova opção" class="border rounded p-2 text-sm flex-1" />
-          <button class="text-red-500 hover:text-red-700 text-xs remover-opcao">Remover</button>
+      item.appendChild(btn);
+    }
+
+    lista.appendChild(item);
+  });
+
+  card.appendChild(lista);
+
+  // Status
+  const status = document.createElement("small");
+  status.className = "text-gray-500";
+  status.textContent = `Status: ${enquete.status}`;
+  card.appendChild(status);
+}
+
+  // Carregar enquetes do servidor
+  async function carregarEnquetes() {
+    try {
+      const resp = await fetch(`/enquetes/${roomId}`);
+      const data = await resp.json();
+      listaEnquetes.innerHTML = "";
+
+      if (data && data.enquetes && data.enquetes.length > 0) {
+        data.enquetes.forEach(enquete => criarCardEnquete(enquete));
+        mensagemVazia.classList.add("hidden");
+      } else {
+        mensagemVazia.classList.remove("hidden");
+      }
+    } catch (err) {
+      console.error("Erro ao carregar enquetes:", err);
+    }
+  }
+
+  // Salvar enquete
+  btnSalvarEnquete.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const pergunta = inputPergunta.value.trim();
+    const descricao = inputDescricao.value.trim();
+    const opcoes = coletarOpcoes();
+
+    if (!pergunta) return alert("Digite a pergunta da enquete.");
+    if (opcoes.length < 2) return alert("Adicione pelo menos duas opções.");
+
+    btnSalvarEnquete.disabled = true;
+    btnSalvarEnquete.textContent = "Salvando...";
+
+    try {
+      const resp = await fetch("/criar_enquete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_id: roomId,
+          titulo: pergunta,
+          descricao: descricao,
+          opcoes: opcoes,
+          status: "aberta"
+        })
+      });
+
+      const data = await resp.json();
+
+      if (data && data.success) {
+        // Limpar formulário
+        inputPergunta.value = "";
+        inputDescricao.value = "";
+        listaOpcoesContainer.innerHTML = `
+          <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 1" />
+          <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 2" />
         `;
-        opcoesContainer.appendChild(novaOpcao);
+        formCriarEnquete.classList.add("hidden");
+        btnNovaEnquete.classList.remove("hidden");
 
-        novaOpcao.querySelector(".remover-opcao").addEventListener("click", () => {
-          novaOpcao.remove();
-        });
-      });
+        // Atualizar lista de enquetes
+        await carregarEnquetes();
+        alert("Enquete salva com sucesso!");
+      } else {
+        console.error("Erro ao salvar enquete:", data);
+        alert("Erro ao salvar enquete no servidor.");
+      }
+    } catch (err) {
+      console.error("Erro de comunicação ao salvar enquete:", err);
+      alert("Erro de comunicação com o servidor.");
+    } finally {
+      btnSalvarEnquete.disabled = false;
+      btnSalvarEnquete.textContent = "Salvar Enquete";
+    }
+  });
 
-      // Ativar remover opções existentes
-      enqueteDiv.querySelectorAll(".remover-opcao").forEach(botao => {
-        botao.addEventListener("click", () => botao.parentElement.remove());
+  // Carrega enquetes ao iniciar
+  carregarEnquetes();
+});
+// Função para criar card visual com botões de voto
+function criarCardEnquete(enquete) {
+  const card = document.createElement("div");
+  card.className = "enquete-card border p-3 rounded shadow mb-4";
+  card.innerHTML = `
+    <h3 class="font-semibold">${enquete.titulo}</h3>
+    ${enquete.descricao ? `<p>${enquete.descricao}</p>` : ""}
+    <div class="opcoes-container mt-2"></div>
+    <small>Status: ${enquete.status}</small>
+  `;
+
+  const opcoesContainer = card.querySelector(".opcoes-container");
+
+  if (enquete.status === "aberta") {
+    // criar botão para cada opção
+    enquete.opcoes.forEach((opcao, idx) => {
+      const btn = document.createElement("button");
+      btn.textContent = opcao;
+      btn.className = "vote-btn bg-blue-500 text-white px-3 py-1 rounded m-1 hover:bg-blue-600 transition";
+      btn.addEventListener("click", async () => {
+        // enviar voto para o back-end
+        try {
+          const resp = await fetch(`/votar_enquete/${enquete.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ opcao_idx: idx })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            alert("Voto registrado!");
+            // opcional: desabilitar os botões após votar
+            opcoesContainer.querySelectorAll("button").forEach(b => b.disabled = true);
+          } else {
+            alert("Erro ao registrar votoa: " + data.message);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Erro de comunicação com o servidor.");
+        }
       });
+      opcoesContainer.appendChild(btn);
     });
+  } else {
+    opcoesContainer.innerHTML = "<em>Enquete fechada</em>";
+  }
+
+  listaEnquetes.appendChild(card);
+}
+
 
     // -------------------------
     // Gastos
@@ -844,6 +1069,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+// ---------------- ENQUETES ----------------
+
 
 
 
