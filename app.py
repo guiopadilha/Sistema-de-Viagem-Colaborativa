@@ -3,6 +3,7 @@ import os
 import mysql.connector
 import random
 import string
+import json
 from werkzeug.security import generate_password_hash, check_password_hash
 
 # Define o caminho absoluto da pasta atual
@@ -602,7 +603,101 @@ def tempo_real():
         total_roteiros=total_roteiros,
         total_gastos=total_gastos
     )
+    
+@app.route("/criar_enquete", methods=["POST"])
+def criar_enquete():
+    data = request.get_json()  # pega JSON enviado pelo fetch
 
+    if not data:
+        return jsonify({"success": False, "message": "Nenhum dado recebido."}), 400
+
+    room_id = data.get("room_id")
+    titulo = data.get("titulo")
+    descricao = data.get("descricao") or ""
+    opcoes = data.get("opcoes", [])  # já vem como lista
+    status = data.get("status", "aberta")
+
+    # Validação mínima
+    if not room_id or not titulo or not opcoes:
+        return jsonify({"success": False, "message": "Preencha todos os campos obrigatórios."}), 400
+
+    try:
+        room_id = int(room_id)
+    except ValueError:
+        return jsonify({"success": False, "message": "room_id inválido."}), 400
+
+    # Converte lista de opções em JSON
+    import json
+    opcoes_json = json.dumps([opcao.strip() for opcao in opcoes if opcao.strip() != ""])
+
+    # Inserção no banco
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO enquetes (room_id, titulo, descricao, opcoes, status)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (room_id, titulo, descricao, opcoes_json, status))
+        conn.commit()
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": False, "message": "Erro ao salvar enquete.", "error": str(e)}), 500
+
+    cursor.close()
+    conn.close()
+    return jsonify({"success": True, "message": "Enquete criada com sucesso!"})
+
+
+@app.route("/enquetes/<int:room_id>")
+def listar_enquetes(room_id):
+    import json
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM enquetes WHERE room_id = %s ORDER BY criado_em DESC", (room_id,))
+        enquetes = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Converter JSON para lista
+        for e in enquetes:
+            e["opcoes"] = json.loads(e["opcoes"])
+
+        return jsonify({"success": True, "enquetes": enquetes})
+
+    except Exception as e:
+        print("Erro ao buscar enquetes:", e)
+        return jsonify({"success": False, "message": "Erro ao buscar enquetes"})
+
+@app.route("/votar_enquete/<int:enquete_id>", methods=["POST"])
+def votar_enquete(enquete_id):
+    data = request.get_json()
+    opcao_idx = data.get("opcao_idx")
+    
+    if opcao_idx is None:
+        return jsonify({"success": False, "message": "Opção inválida"}), 400
+
+    # Aqui você pode salvar em uma tabela de votos:
+    # ex: tabela votos: id, enquete_id, opcao_idx, user_id
+    # Exemplo mínimo:
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO votos (enquete_id, opcao_idx) VALUES (%s, %s)
+        """, (enquete_id, opcao_idx))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Erro ao registrar voto:", e)
+        return jsonify({"success": False, "message": "Erro ao registrar voto"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
