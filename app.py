@@ -475,46 +475,75 @@ def excluir_roteiro():
     conn.close()
 
     return jsonify({'message': 'Roteiro excluído com sucesso!'})
+@app.route("/sala/<int:room_id>")
+def sala_view(room_id):
+    # passa o room_id como currentRoomId
+    return render_template("sala.html", currentRoomId=room_id)
+
+# ➕ Criar tarefa
+@app.route("/add_tarefa", methods=["POST"])
+def add_tarefa():
+    data = request.get_json()
+    room_id = data.get("room_id")
+    titulo = data.get("titulo")
+    responsavel = data.get("responsavel", "")
+    descricao = data.get("descricao", "")
+    prazo = data.get("prazo")
+    status = data.get("status", "pendente")
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO tarefas (room_id, titulo, descricao, responsavel, prazo, status)
+        VALUES (%s, %s, %s, %s, %s, %s)
+    """, (room_id, titulo, descricao, responsavel, prazo, status))
+    conn.commit()
+    cur.close()
+    return jsonify({"success": True})
 
 
-@app.route("/tarefas/<int:room_id>", methods=["GET"])
-@login_required
-def listar_tarefas_room(room_id):
+@app.route("/get_tarefas/<int:room_id>")
+def get_tarefas(room_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-
-    # Tarefas da sala
     cursor.execute("""
-        SELECT t.id, t.descricao, t.responsavel_id, u.nome AS responsavel_nome, t.status
-        FROM tarefas t
-        LEFT JOIN usuarios u ON t.responsavel_id = u.id_usuario
-        WHERE t.room_id = %s
-        ORDER BY t.created_at ASC
+        SELECT *
+        FROM tarefas
+        WHERE room_id = %s
+        ORDER BY prazo ASC, criado_em DESC
     """, (room_id,))
     tarefas = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return jsonify(tarefas)
 
-    # Usuários da sala
-    cursor.execute("""
-        SELECT u.id_usuario, u.nome
-        FROM user_rooms ur
-        JOIN usuarios u ON ur.user_id = u.id_usuario
-        WHERE ur.room_id = %s
-    """, (room_id,))
-    usuarios_sala = cursor.fetchall()
+# 🔄 Atualizar status da tarefa
+@app.route("/atualizar_tarefa_status/<int:id>", methods=["PUT"])
+def atualizar_tarefa_status(id):
+    data = request.get_json()  # sempre use get_json() para POST/PUT com JSON
+    status = data.get("status")
+
+    conn = get_db_connection()  # usar a função correta
+    cur = conn.cursor()
+    cur.execute("UPDATE tarefas SET status=%s WHERE id=%s", (status, id))
+    conn.commit()
+    cur.close()
+    # Não precisa fechar conn se usar teardown_appcontext
+    return jsonify({"success": True, "message": "Status atualizado com sucesso!"})
+
+@app.route("/delete_tarefa/<int:id>", methods=["DELETE"])
+def delete_tarefa(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("DELETE FROM tarefas WHERE id = %s", (id,))
+    conn.commit()
 
     cursor.close()
     conn.close()
 
-    return jsonify({"tarefas": tarefas, "usuarios_sala": usuarios_sala})
+    return jsonify({"success": True, "message": "Tarefa removida com sucesso!"})
 
-# Função de conexão
-def get_db_connection():
-    return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='12345678',
-        database='viagens_colegas'
-    )
 
 # 📥 Adicionar gasto
 @app.route("/add_gasto", methods=["POST"])
@@ -658,15 +687,37 @@ def listar_enquetes(room_id):
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
+        # busca as enquetes
         cursor.execute("SELECT * FROM enquetes WHERE room_id = %s ORDER BY criado_em DESC", (room_id,))
         enquetes = cursor.fetchall()
 
+        # para cada enquete, buscar votos agrupados
+        for e in enquetes:
+            enquete_id = e["id"]
+            opcoes = json.loads(e["opcoes"])
+
+            cursor_votos = conn.cursor()
+            cursor_votos.execute("""
+                SELECT opcao_idx, COUNT(*) 
+                FROM votos 
+                WHERE enquete_id = %s 
+                GROUP BY opcao_idx
+            """, (enquete_id,))
+            votos_db = cursor_votos.fetchall()
+            cursor_votos.close()
+
+            # cria vetor de votos do tamanho das opções
+            votos = [0] * len(opcoes)
+            for row in votos_db:
+                idx, count = row
+                votos[idx] = count
+
+            # adiciona ao objeto que vai pro front
+            e["opcoes"] = opcoes
+            e["votos"] = votos
+
         cursor.close()
         conn.close()
-
-        # Converter JSON para lista
-        for e in enquetes:
-            e["opcoes"] = json.loads(e["opcoes"])
 
         return jsonify({"success": True, "enquetes": enquetes})
 
@@ -674,30 +725,64 @@ def listar_enquetes(room_id):
         print("Erro ao buscar enquetes:", e)
         return jsonify({"success": False, "message": "Erro ao buscar enquetes"})
 
+
+    
 @app.route("/votar_enquete/<int:enquete_id>", methods=["POST"])
 def votar_enquete(enquete_id):
     data = request.get_json()
     opcao_idx = data.get("opcao_idx")
-    
-    if opcao_idx is None:
-        return jsonify({"success": False, "message": "Opção inválida"}), 400
 
-    # Aqui você pode salvar em uma tabela de votos:
-    # ex: tabela votos: id, enquete_id, opcao_idx, user_id
-    # Exemplo mínimo:
+    if opcao_idx is None:
+        return jsonify({"success": False, "message": "Índice da opção não enviado"}), 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
         cursor.execute("""
-            INSERT INTO votos (enquete_id, opcao_idx) VALUES (%s, %s)
+            INSERT INTO votos (enquete_id, opcao_idx)
+            VALUES (%s, %s)
         """, (enquete_id, opcao_idx))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/excluir_enquete/<int:enquete_id>", methods=["DELETE"])
+def excluir_enquete(enquete_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Exclui votos relacionados
+        cursor.execute("DELETE FROM votos WHERE enquete_id = %s", (enquete_id,))
+
+        # Exclui a enquete
+        cursor.execute("DELETE FROM enquetes WHERE id = %s", (enquete_id,))
+
         conn.commit()
         cursor.close()
         conn.close()
-        return jsonify({"success": True})
+
+        return jsonify({"success": True, "message": "Enquete excluída com sucesso!"})
+
     except Exception as e:
-        print("Erro ao registrar voto:", e)
-        return jsonify({"success": False, "message": "Erro ao registrar voto"}), 500
+        conn.rollback()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": False, "message": "Erro ao excluir enquete", "error": str(e)}), 500
+    
+    
+
 
 if __name__ == "__main__":
     app.run(debug=True)
