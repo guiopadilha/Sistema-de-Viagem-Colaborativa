@@ -89,15 +89,6 @@ CREATE TABLE votacoes (
     FOREIGN KEY (id_viagem) REFERENCES viagens(id_viagem)
 );
 
-CREATE TABLE votos (
-    id_voto INT AUTO_INCREMENT PRIMARY KEY,
-    id_votacao INT NOT NULL,
-    id_usuario INT NOT NULL,
-    opcao VARCHAR(255) NOT NULL,
-    data_voto TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (id_votacao) REFERENCES votacoes(id_votacao),
-    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)
-);
 
 --------------------------------------
 -- Cronograma da viagem
@@ -212,13 +203,15 @@ CREATE TABLE tarefas (
 CREATE TABLE tarefas (
     id INT AUTO_INCREMENT PRIMARY KEY,
     room_id INT NOT NULL,
-    descricao TEXT NOT NULL,
-    responsavel_id INT DEFAULT NULL,
-    status ENUM('pendente', 'em andamento', 'concluida') DEFAULT 'pendente',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (room_id) REFERENCES rooms(id),
-    FOREIGN KEY (responsavel_id) REFERENCES usuarios(id_usuario)
+    titulo VARCHAR(255) NOT NULL,
+    descricao TEXT,
+    responsavel VARCHAR(150),
+    prazo DATE,
+    status ENUM('pendente', 'em_andamento', 'concluida') DEFAULT 'pendente',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
+
 CREATE TABLE gastos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     room_id INT NOT NULL,
@@ -230,7 +223,31 @@ CREATE TABLE gastos (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room_id) REFERENCES rooms(id)
 );
+CREATE TABLE enquetes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    titulo VARCHAR(255) NOT NULL,
+    descricao TEXT,
+    opcoes JSON NOT NULL, -- Ex: ["Opção A", "Opção B"]
+    status ENUM('aberta', 'fechada') DEFAULT 'aberta',
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id)
+);
 
+CREATE TABLE votos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquete_id INT NOT NULL,
+    opcao_idx INT NOT NULL,
+    criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (enquete_id) REFERENCES enquetes(id) ON DELETE CASCADE
+);
+CREATE TABLE enquete_opcoes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    enquete_id INT NOT NULL,
+    opcao VARCHAR(255) NOT NULL,
+    votos INT DEFAULT 0,
+    FOREIGN KEY (enquete_id) REFERENCES enquetes(id)
+);
 
 --------------------------------------
 select * from usuarios;
@@ -239,6 +256,8 @@ select * from user_rooms;
 select * from roteiros;
 select * from tarefas;
 select * from gastos;
+select * from enquetes;
+select * from votos;
 INSERT INTO gastos (room_id, descricao, valor, data_gasto, categoria, pago_por)
 VALUES (1, 'Teste de gasto', 150.75, '2025-10-27', 'Alimentação', 'Lucas');
 
@@ -251,5 +270,11 @@ INSERT INTO user_rooms (user_id, room_id) VALUES (1, 1);
 INSERT INTO user_rooms (user_id, room_id) VALUES (1, 3);
 INSERT INTO gastos (room_id, descricao, valor, data_gasto, categoria, pago_por)
 VALUES (2, 'Teste de gasto', 150.75, '2025-10-27', 'Alimentação', 'Lucas');
+
+
+INSERT INTO enquete_opcoes (enquete_id, opcao)
+VALUES
+(1, 'Praia'),
+(1, 'Montanha');
 
 
