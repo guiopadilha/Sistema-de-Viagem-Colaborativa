@@ -56,7 +56,8 @@
             <p class="text-sm text-gray-500">Planeje suas próx...</p>
           </div>
         </div>
-        <button onclick="logout()" class="ml-3 text-red-500 hover:text-red-700 text-sm">Sair</button>
+        <button onclick="window.location.href='/logout'" class="ml-3 text-red-500 hover:text-red-700 text-sm">Sair</button>
+
       </div>
     </div>
   </aside>
@@ -255,10 +256,15 @@
       <!-- Tarefas -->
 <div id="tarefas" class="tab-content hidden">
   <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="tarefas-container">
+    
     <h2 class="text-xl font-semibold mb-3">Tarefas da Viagem</h2>
+
+    <!-- Hidden Room ID (Flask preenche) -->
+    <input type="hidden" id="room-id" value="{{ room_id }}">
+
     <p id="mensagem-tarefas-vazia" class="text-gray-500 mb-6">Nenhuma tarefa adicionada ainda.</p>
 
-    <!-- Lista de tarefas -->
+    <!-- Lista de tarefas vindas do banco -->
     <div id="lista-tarefas" class="space-y-4 text-left"></div>
 
     <!-- Botão para abrir formulário -->
@@ -272,25 +278,26 @@
       <!-- Nome da Tarefa -->
       <div class="flex flex-col mb-4">
         <label class="text-gray-600 text-sm mb-1">Nome da Tarefa</label>
-        <input type="text" id="nome-tarefa" class="border p-2 rounded w-full" placeholder="Digite o nome da tarefa">
+        <input type="text" id="nome-tarefa" name="titulo" class="border p-2 rounded w-full" placeholder="Digite o nome da tarefa">
       </div>
 
       <!-- Selecionar responsável -->
       <div class="flex flex-col mb-4">
         <label class="text-gray-600 text-sm mb-1">Responsável</label>
-        <select id="responsavel-tarefa" class="border p-2 rounded w-full"></select>
+        <select id="responsavel-tarefa" name="responsavel" class="border p-2 rounded w-full"></select>
       </div>
 
       <!-- Selecionar prioridade -->
       <div class="flex flex-col mb-4">
         <label class="text-gray-600 text-sm mb-1">Prioridade</label>
-        <select id="prioridade-tarefa" class="border p-2 rounded w-full">
+        <select id="prioridade-tarefa" name="prioridade" class="border p-2 rounded w-full">
           <option value="Alta">Alta</option>
           <option value="Média">Média</option>
           <option value="Baixa">Baixa</option>
         </select>
       </div>
 
+      <!-- Botões -->
       <div class="flex justify-end gap-2">
         <button id="salvar-tarefa" class="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600">Salvar</button>
         <button id="cancelar-tarefa" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
@@ -479,56 +486,111 @@ document.addEventListener("DOMContentLoaded", () => {
   lista.className = "list-disc pl-5 mb-2";
 
   // Inicializa votos se não existir
-  if (!enquete.votos) enquete.votos = new Array(enquete.opcoes.length).fill(0);
+if (!enquete.votos) enquete.votos = new Array(enquete.opcoes.length).fill(0);
 
-  enquete.opcoes.forEach((opcao, idx) => {
-    const item = document.createElement("li");
-    item.className = "mb-1 flex justify-between items-center";
+const totalVotos = enquete.votos.reduce((a, b) => a + b, 0) || 1;
 
-    const texto = document.createElement("span");
-    texto.textContent = `${opcao} (${enquete.votos[idx]} votos)`;
-    item.appendChild(texto);
+enquete.opcoes.forEach((opcao, idx) => {
+  const li = document.createElement("li");
+  li.className =
+    "mb-3 bg-white shadow-sm border rounded-xl p-3 transition hover:shadow-md";
 
-    if (enquete.status === "aberta") {
-      const btn = document.createElement("button");
-      btn.className = "ml-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600";
-      btn.textContent = "Votar";
+  const linha = document.createElement("div");
+  linha.className = "flex justify-between items-center mb-2";
 
-      btn.addEventListener("click", async () => {
-        try {
-          const resp = await fetch(`/votar_enquete/${enquete.id}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ opcao_idx: idx })
-          });
-          const data = await resp.json();
-          if (data.success) {
-            enquete.votos[idx]++; // soma localmente
-            criarCardEnquete(enquete); // atualiza o card
-          } else {
-            alert("Erro ao registrar voto: " + data.message);
-          }
-        } catch (err) {
-          console.error(err);
-          alert("Erro de comunicação com o servidor.");
-        }
+  const votos = enquete.votos[idx];
+  const pct = Math.round((votos / totalVotos) * 100);
+
+  const nomeOpcao = document.createElement("span");
+  nomeOpcao.className = "font-semibold text-gray-700";
+  nomeOpcao.textContent = opcao;
+
+  const contagem = document.createElement("span");
+  contagem.className = "text-sm text-gray-500 ml-2";
+  contagem.textContent = `${votos} voto(s) • ${pct}%`;
+
+  linha.appendChild(nomeOpcao);
+  linha.appendChild(contagem);
+
+  if (enquete.status === "aberta") {
+    const btn = document.createElement("button");
+    btn.className =
+      "ml-2 px-3 py-1 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition";
+    btn.textContent = "Votar";
+
+    btn.addEventListener("click", async () => {
+      const resp = await fetch(`/votar_enquete/${enquete.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opcao_idx: idx })
       });
 
-      item.appendChild(btn);
-    }
+      const data = await resp.json();
+      if (data.success) {
+        enquete.votos[idx]++;
+        criarCardEnquete(enquete);
+      } else {
+        alert(data.message);
+      }
+    });
 
-    lista.appendChild(item);
+    linha.appendChild(btn);
+  }
+
+  li.appendChild(linha);
+
+  const barra = document.createElement("div");
+  barra.className = "w-full h-3 bg-gray-200 rounded-md overflow-hidden";
+
+  const fill = document.createElement("div");
+  fill.className = "h-full bg-blue-500 rounded-md transition-all";
+  fill.style.width = pct + "%";
+
+  barra.appendChild(fill);
+  li.appendChild(barra);
+
+  lista.appendChild(li);
+});
+
+card.appendChild(lista);
+
+// Botão excluir pequeno
+if (enquete.status === "aberta") {
+  const btnExcluir = document.createElement("button");
+  btnExcluir.textContent = "Excluir";
+  btnExcluir.className =
+    "px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-medium mt-2";
+
+  btnExcluir.addEventListener("click", async () => {
+    if (!confirm("Excluir esta enquete?")) return;
+
+    const resp = await fetch(`/excluir_enquete/${enquete.id}`, {
+      method: "DELETE"
+    });
+    const data = await resp.json();
+
+    if (data.success) carregarEnquetes();
   });
 
-  card.appendChild(lista);
-
-  // Status
-  const status = document.createElement("small");
-  status.className = "text-gray-500";
-  status.textContent = `Status: ${enquete.status}`;
-  card.appendChild(status);
+  const actions = document.createElement("div");
+  actions.className = "flex justify-end";
+  actions.appendChild(btnExcluir);
+  card.appendChild(actions);
 }
 
+// Status tag
+const status = document.createElement("div");
+status.className =
+  "inline-block mt-2 px-3 py-1 text-xs rounded-full font-semibold " +
+  (enquete.status === "aberta"
+    ? "bg-green-100 text-green-700"
+    : "bg-gray-200 text-gray-600");
+
+status.textContent =
+  enquete.status === "aberta" ? "🟢 Enquete aberta" : "🔒 Enquete encerrada";
+
+card.appendChild(status);
+  }
   // Carregar enquetes do servidor
   async function carregarEnquetes() {
     try {
@@ -654,6 +716,23 @@ function criarCardEnquete(enquete) {
   listaEnquetes.appendChild(card);
 }
 
+function excluirEnquete(id) {
+    if (!confirm("Tem certeza que deseja excluir esta enquete?")) return;
+
+    fetch(`/excluir_enquete/${id}`, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Enquete excluída!");
+            carregarEnquetes(); // recarrega lista
+        } else {
+            alert("Erro ao excluir: " + data.message);
+        }
+    })
+    .catch(err => console.error("Erro ao excluir enquete:", err));
+}
 
     // -------------------------
     // Gastos
@@ -774,82 +853,116 @@ listaGastos.addEventListener("click", async (e) => {
 carregarGastos();
     // -------------------------
     // Tarefas
+    
  document.addEventListener("DOMContentLoaded", () => {
   const btnAdicionarTarefa = document.getElementById("adicionar-tarefa");
   const listaTarefas = document.getElementById("lista-tarefas");
   const mensagemTarefasVazia = document.getElementById("mensagem-tarefas-vazia");
+  const formTarefa = document.getElementById("form-tarefa");
+  const btnSalvarTarefa = document.getElementById("salvar-tarefa");
+  const btnCancelarTarefa = document.getElementById("cancelar-tarefa");
+  const inputNome = document.getElementById("nome-tarefa");
+  const selectResponsavel = document.getElementById("responsavel-tarefa");
+  const selectPrioridade = document.getElementById("prioridade-tarefa");
 
+  // Mostrar formulário
   btnAdicionarTarefa.addEventListener("click", () => {
-    mensagemTarefasVazia.classList.add("hidden");
+    formTarefa.classList.remove("hidden");
+    btnAdicionarTarefa.classList.add("hidden");
+  });
 
-    const tarefaDiv = document.createElement("div");
-    tarefaDiv.className = "bg-white p-4 border rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3";
+  // Cancelar formulário
+  btnCancelarTarefa.addEventListener("click", (e) => {
+    e.preventDefault();
+    formTarefa.classList.add("hidden");
+    btnAdicionarTarefa.classList.remove("hidden");
+    inputNome.value = "";
+    selectResponsavel.value = "";
+    selectPrioridade.value = "Baixa";
+  });
 
-    // Select de teste com nomes de usuário fixos
-    tarefaDiv.innerHTML = `
-      <div class="flex-1 flex flex-wrap gap-2 items-center">
-        <input type="text" placeholder="Nome da Tarefa" class="border rounded p-2 text-sm nome-tarefa flex-1" />
-        <select class="border rounded p-2 text-sm prioridade-tarefa">
-          <option value="">Prioridade</option>
-          <option>Baixa</option>
-          <option>Média</option>
-          <option>Alta</option>
-        </select>
-        <select class="border rounded p-2 text-sm responsavel-tarefa">
-          <option value="1">Lucas</option>
-          <option value="2">Maria</option>
-          <option value="3">João</option>
-        </select>
-      </div>
-      <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded hover:bg-blue-600 salvar-tarefa">Salvar</button>
-    `;
+  // Salvar tarefa
+  btnSalvarTarefa.addEventListener("click", async (e) => {
+    e.preventDefault(); // ✅ impede recarregar a página
 
-    listaTarefas.appendChild(tarefaDiv);
+    const titulo = inputNome.value.trim();
+    const responsavel = selectResponsavel.value;
+    const prioridade = selectPrioridade.value;
 
-    const btnSalvar = tarefaDiv.querySelector(".salvar-tarefa");
-    btnSalvar.addEventListener("click", () => {
-      const nomeTarefa = tarefaDiv.querySelector(".nome-tarefa").value.trim();
-      const prioridade = tarefaDiv.querySelector(".prioridade-tarefa").value;
-      const responsavelSelect = tarefaDiv.querySelector(".responsavel-tarefa");
-      const responsavelId = responsavelSelect.value;
-      const responsavelNome = responsavelSelect.options[responsavelSelect.selectedIndex].text;
+    if (!titulo) return alert("Digite o nome da tarefa!");
 
-      if (!nomeTarefa) {
-        alert("Digite o nome da tarefa!");
+    try {
+      const resp = await fetch("/add_tarefa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_id: 1, // substitua pelo room_id correto
+          titulo: titulo,
+          responsavel: responsavel,
+          descricao: "",
+          prazo: null,
+          status: "pendente"
+        })
+      });
+
+      const data = await resp.json();
+      if (data.success) {
+        inputNome.value = "";
+        selectResponsavel.value = "";
+        selectPrioridade.value = "Baixa";
+        formTarefa.classList.add("hidden");
+        btnAdicionarTarefa.classList.remove("hidden");
+        carregarTarefas();
+      } else {
+        alert("Erro ao salvar tarefa");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro de comunicação com o servidor");
+    }
+  });
+
+  // Carregar tarefas
+  async function carregarTarefas() {
+    try {
+      const resp = await fetch("/get_tarefas/1"); // substitua pelo room_id correto
+      const tarefas = await resp.json();
+      listaTarefas.innerHTML = "";
+
+      if (!tarefas || tarefas.length === 0) {
+        mensagemTarefasVazia.classList.remove("hidden");
         return;
       }
 
-      const corPrioridade = { "Baixa": "bg-green-400", "Média": "bg-yellow-400", "Alta": "bg-red-500" }[prioridade] || "bg-gray-400";
+      mensagemTarefasVazia.classList.add("hidden");
 
-      tarefaDiv.innerHTML = `
-        <div class="flex items-center gap-3 flex-1 flex-wrap">
-          <input type="checkbox" class="h-5 w-5 marcar-tarefa" />
-          <div class="flex-1 min-w-[180px]">
-            <p class="nome-tarefa font-medium">${nomeTarefa}</p>
-            <p class="text-sm text-gray-500 flex items-center gap-1">
-              <span class="w-3 h-3 inline-block rounded-full ${corPrioridade}"></span>
-              ${prioridade || "Sem prioridade"}
-            </p>
-            <p class="text-sm text-gray-500">ID Responsável: ${responsavelId} (${responsavelNome})</p>
+      tarefas.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "bg-white p-4 border rounded-xl flex justify-between items-center";
+
+        div.innerHTML = `
+          <div>
+            <p class="font-medium">${t.titulo}</p>
+            <p class="text-sm text-gray-500">Responsável: ${t.responsavel || "-"}</p>
+            <p class="text-sm text-gray-500">Status: ${t.status}</p>
           </div>
-        </div>
-        <button class="text-red-500 hover:text-red-700 text-sm remover-tarefa">Remover</button>
-      `;
+          <button class="text-red-500 hover:text-red-700 text-sm" data-id="${t.id}">Remover</button>
+        `;
+        listaTarefas.appendChild(div);
 
-      const checkbox = tarefaDiv.querySelector(".marcar-tarefa");
-      const nomeEl = tarefaDiv.querySelector(".nome-tarefa");
-      checkbox.addEventListener("change", () => {
-        checkbox.checked 
-          ? nomeEl.classList.add("line-through", "text-gray-400") 
-          : nomeEl.classList.remove("line-through", "text-gray-400");
+        // Botão remover
+        div.querySelector("button").addEventListener("click", async () => {
+          const id = div.querySelector("button").dataset.id;
+          await fetch(`/delete_tarefa/${id}`, { method: "DELETE" });
+          carregarTarefas();
+        });
       });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
-      tarefaDiv.querySelector(".remover-tarefa").addEventListener("click", () => {
-        tarefaDiv.remove();
-        if (listaTarefas.children.length === 0) mensagemTarefasVazia.classList.remove("hidden");
-      });
-    });
-  });
+  carregarTarefas();
 });
 
 
