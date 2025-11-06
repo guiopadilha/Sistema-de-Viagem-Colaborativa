@@ -544,6 +544,27 @@ def delete_tarefa(id):
 
     return jsonify({"success": True, "message": "Tarefa removida com sucesso!"})
 
+@app.route("/tarefa_status/<int:tarefa_id>", methods=["POST"])
+def tarefa_status(tarefa_id):
+    try:
+        novo_status = request.form.get("status")
+        print(f"📝 Atualizando tarefa {tarefa_id} para: {novo_status}")
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE tarefas SET status = %s WHERE id = %s",
+            (novo_status, tarefa_id)
+        )
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "status": novo_status})
+    except Exception as e:
+        print("❌ Erro ao atualizar status:", e)
+        return jsonify({"success": False, "error": str(e)}), 500
 
 # 📥 Adicionar gasto
 @app.route("/add_gasto", methods=["POST"])
