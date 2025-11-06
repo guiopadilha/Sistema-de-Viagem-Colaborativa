@@ -103,7 +103,7 @@
     <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="enquetes">Enquetes</button>
     <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="gastos">Gastos</button>
     <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="tarefas">Tarefas</button>
-    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="membros">Membros</button>
+   
   </div>
 
   <!-- ABA ROTEIRO -->
@@ -306,18 +306,7 @@ class="border p-2 rounded w-full" placeholder="Digite o responsável">
   </div>
 </div>
 
-      <!-- Membros -->
-      <div id="membros" class="tab-content hidden">
-        <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="membros-container">
-          <h2 class="text-xl font-semibold mb-3">Membros da Sala</h2>
-          <p id="mensagem-membros-vazia" class="text-gray-500 mb-6">Nenhum membro adicionado ainda.</p>
-          <div id="lista-membros" class="space-y-4 text-left"></div>
-          <button id="adicionar-membro" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
-            + Adicionar Membro
-          </button>
-        </div>
-      </div>
-    </div>
+     
 
 <!-- ========== MODAL: CRIAR ENQUETE (fora da aba, no fim do body) ========== -->
 <div id="modal-enquete" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -990,62 +979,81 @@ carregarGastos();
 
         listaTarefas.appendChild(div);
 
-        div.querySelector("button").addEventListener("click", async () => {
-          await fetch(`/delete_tarefa/${t.id}`, { method: "DELETE" });
-          carregarTarefas();
-        });
-      });
+        // --- BOTÃO REMOVER ---
+        const btnRemover = div.querySelector("button");
+        if (btnRemover) {
+          btnRemover.addEventListener("click", async () => {
+            try {
+              await fetch(`/delete_tarefa/${t.id}`, { method: "DELETE" });
+              carregarTarefas();
+            } catch (err) {
+              console.error("Erro ao remover tarefa:", err);
+              alert("Erro ao remover tarefa.");
+            }
+          });
+        }
+
+        // --- CHECKBOX CONCLUIR ---
+        const checkbox = div.querySelector(".marcar-concluida");
+        if (checkbox) {
+          checkbox.addEventListener("change", async (e) => {
+            const novoStatus = e.target.checked ? "concluida" : "pendente";
+
+            try {
+              const r = await fetch(`/update_tarefa_status/${t.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: novoStatus })
+              });
+
+              if (!r.ok) throw new Error("Falha ao atualizar status");
+
+              // Atualiza aparência visual sem recarregar tudo
+              const tituloEl = div.querySelector("p.font-semibold");
+              if (tituloEl) {
+                if (novoStatus === "concluida") {
+                  tituloEl.classList.add("line-through", "text-gray-400");
+                } else {
+                  tituloEl.classList.remove("line-through", "text-gray-400");
+                }
+              }
+            } catch (err) {
+              console.error("Erro ao atualizar status:", err);
+              alert("Erro ao salvar o status da tarefa.");
+              // Reverte o checkbox visualmente se der erro
+              e.target.checked = !e.target.checked;
+            }
+          });
+        }
+
+      }); // end forEach
 
     } catch (err) {
       console.error(err);
+      mensagemTarefasVazia.classList.remove("hidden");
     }
+  } // end carregarTarefas
+
+  // Escapa texto para evitar XSS caso dados venham direto do DB
+  function escapeHtml(text) {
+    if (!text && text !== 0) return "";
+    return String(text)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
   }
 
+  // Chama ao carregar a página
   carregarTarefas();
-});
+}); // end DOMContentLoaded
 
 // ✅ checkbox de concluir tarefa
 
 
     // -------------------------
-    // Membros
-    const btnAdicionarMembro = document.getElementById("adicionar-membro");
-    const listaMembros = document.getElementById("lista-membros");
-    const mensagemMembrosVazia = document.getElementById("mensagem-membros-vazia");
-
-    btnAdicionarMembro.addEventListener("click", () => {
-      mensagemMembrosVazia.classList.add("hidden");
-
-      const membroDiv = document.createElement("div");
-      membroDiv.className = "bg-white p-4 border rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3";
-      membroDiv.innerHTML = `
-        <div class="flex-1 flex flex-wrap gap-2 items-center">
-          <input type="text" placeholder="Nome do membro" class="border rounded p-2 text-sm flex-1" />
-          <input type="text" placeholder="Função (ex: organizador)" class="border rounded p-2 text-sm flex-1" />
-        </div>
-        <button class="bg-blue-500 text-white text-xs px-3 py-2 rounded hover:bg-blue-600 salvar-membro">Salvar</button>
-      `;
-      listaMembros.appendChild(membroDiv);
-
-      membroDiv.querySelector(".salvar-membro").addEventListener("click", () => {
-        const nome = membroDiv.querySelectorAll("input")[0].value.trim();
-        const funcao = membroDiv.querySelectorAll("input")[1].value.trim();
-        if (!nome) { alert("Digite o nome do membro!"); return; }
-
-        membroDiv.innerHTML = `
-          <div class="flex-1">
-            <p class="font-medium">${nome}</p>
-            <p class="text-gray-500 text-sm">${funcao || "Sem função definida"}</p>
-          </div>
-          <button class="text-red-500 hover:text-red-700 text-sm remover-membro">Remover</button>
-        `;
-        membroDiv.querySelector(".remover-membro").addEventListener("click", () => {
-          membroDiv.remove();
-          if (listaMembros.children.length === 0) mensagemMembrosVazia.classList.remove("hidden");
-        });
-      });
-    });
-
+   
     // -------------------------
     // Sidebar interativa
     function toggleSidebar() {
