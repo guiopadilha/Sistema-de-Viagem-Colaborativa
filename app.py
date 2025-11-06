@@ -566,6 +566,23 @@ def tarefa_status(tarefa_id):
         print("❌ Erro ao atualizar status:", e)
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route("/update_tarefa_status/<int:id>", methods=["PUT"])
+def update_tarefa_status(id):
+    data = request.get_json()
+    novo_status = data.get("status")
+
+    try:
+        conn = mysql.connector.connect(**db_config)
+        cursor = conn.cursor()
+        cursor.execute("UPDATE tarefas SET status = %s WHERE id = %s", (novo_status, id))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify({"success": True})
+    except Exception as e:
+        print("Erro ao atualizar status:", e)
+        return jsonify({"success": False}), 500
+
 # 📥 Adicionar gasto
 @app.route("/add_gasto", methods=["POST"])
 def add_gasto():
@@ -803,7 +820,7 @@ def excluir_enquete(enquete_id):
         return jsonify({"success": False, "message": "Erro ao excluir enquete", "error": str(e)}), 500
     
     
-
+    
 
 if __name__ == "__main__":
     app.run(debug=True)
