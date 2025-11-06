@@ -34,13 +34,13 @@
         <h2 class="text-gray-500 text-sm mb-3 font-semibold">RESUMO RÁPIDO</h2>
         <ul class="space-y-2">
           <li class="flex justify-between text-gray-700">
-            <span>Salas Ativas</span><span id="active-rooms-count" class="bg-blue-100 text-blue-600 px-2 rounded-full">0</span>
+            <span>Salas Ativas</span><span id="active-rooms-count" class="bg-blue-100 text-blue-600 px-2 rounded-full"></span>
           </li>
           <li class="flex justify-between text-gray-700">
-            <span>Tarefas Pendentes</span><span class="bg-yellow-100 text-yellow-600 px-2 rounded-full">7</span>
+            <span>Tarefas Pendentes</span><span class="bg-yellow-100 text-yellow-600 px-2 rounded-full"></span>
           </li>
           <li class="flex justify-between text-gray-700">
-            <span>Enquetes Abertas</span><span class="bg-green-100 text-green-600 px-2 rounded-full">2</span>
+            <span>Enquetes Abertas</span><span class="bg-green-100 text-green-600 px-2 rounded-full"></span>
           </li>
         </ul>
       </div>
@@ -92,9 +92,7 @@
         </span>
       </p>
     </div>
-    <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md">
-      Configurações
-    </button>
+    
   </div>
 </div>
 
@@ -284,7 +282,9 @@
       <!-- Selecionar responsável -->
       <div class="flex flex-col mb-4">
         <label class="text-gray-600 text-sm mb-1">Responsável</label>
-        <select id="responsavel-tarefa" name="responsavel" class="border p-2 rounded w-full"></select>
+        <input type="text" id="responsavel-tarefa" name="responsavel" 
+class="border p-2 rounded w-full" placeholder="Digite o responsável">
+
       </div>
 
       <!-- Selecionar prioridade -->
@@ -862,7 +862,7 @@ carregarGastos();
   const btnSalvarTarefa = document.getElementById("salvar-tarefa");
   const btnCancelarTarefa = document.getElementById("cancelar-tarefa");
   const inputNome = document.getElementById("nome-tarefa");
-  const selectResponsavel = document.getElementById("responsavel-tarefa");
+  const inputResponsavel = document.getElementById("responsavel-tarefa");
   const selectPrioridade = document.getElementById("prioridade-tarefa");
 
   // Mostrar formulário
@@ -877,17 +877,18 @@ carregarGastos();
     formTarefa.classList.add("hidden");
     btnAdicionarTarefa.classList.remove("hidden");
     inputNome.value = "";
-    selectResponsavel.value = "";
+    inputResponsavel.value = "";
     selectPrioridade.value = "Baixa";
   });
 
   // Salvar tarefa
   btnSalvarTarefa.addEventListener("click", async (e) => {
-    e.preventDefault(); // ✅ impede recarregar a página
+    e.preventDefault();
 
     const titulo = inputNome.value.trim();
-    const responsavel = selectResponsavel.value;
+    const responsavel = inputResponsavel.value.trim();
     const prioridade = selectPrioridade.value;
+    const roomId = document.getElementById("room-id").value;
 
     if (!titulo) return alert("Digite o nome da tarefa!");
 
@@ -896,7 +897,7 @@ carregarGastos();
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          room_id: 1, // substitua pelo room_id correto
+          room_id: roomId,
           titulo: titulo,
           responsavel: responsavel,
           descricao: "",
@@ -908,10 +909,12 @@ carregarGastos();
       const data = await resp.json();
       if (data.success) {
         inputNome.value = "";
-        selectResponsavel.value = "";
+        inputResponsavel.value = "";
         selectPrioridade.value = "Baixa";
+
         formTarefa.classList.add("hidden");
         btnAdicionarTarefa.classList.remove("hidden");
+        
         carregarTarefas();
       } else {
         alert("Erro ao salvar tarefa");
@@ -924,9 +927,12 @@ carregarGastos();
 
   // Carregar tarefas
   async function carregarTarefas() {
+    const roomId = document.getElementById("room-id").value;
+
     try {
-      const resp = await fetch("/get_tarefas/1"); // substitua pelo room_id correto
+      const resp = await fetch(`/get_tarefas/${roomId}`);
       const tarefas = await resp.json();
+
       listaTarefas.innerHTML = "";
 
       if (!tarefas || tarefas.length === 0) {
@@ -940,23 +946,56 @@ carregarGastos();
         const div = document.createElement("div");
         div.className = "bg-white p-4 border rounded-xl flex justify-between items-center";
 
-        div.innerHTML = `
-          <div>
-            <p class="font-medium">${t.titulo}</p>
-            <p class="text-sm text-gray-500">Responsável: ${t.responsavel || "-"}</p>
-            <p class="text-sm text-gray-500">Status: ${t.status}</p>
-          </div>
-          <button class="text-red-500 hover:text-red-700 text-sm" data-id="${t.id}">Remover</button>
-        `;
+       div.innerHTML = `
+  <div class="flex justify-between items-center w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-200">
+    <div class="flex items-center gap-4">
+      <input 
+        type="checkbox" 
+        class="marcar-concluida accent-green-600 cursor-pointer w-5 h-5 mt-1" 
+        data-id="${t.id}" 
+        ${t.status === "concluida" ? "checked" : ""}
+      >
+
+      <div>
+        <p class="font-semibold text-gray-800 text-lg leading-tight ${t.status === "concluida" ? "line-through text-gray-400" : ""}">
+          ${t.titulo}
+        </p>
+
+        <p class="text-sm text-gray-500 mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-user text-purple-600"></i>
+          <span class="font-medium">${t.responsavel || "Sem responsável"}</span>
+        </p>
+
+        ${
+          t.prioridade
+            ? `<p class="text-xs mt-2 font-medium px-3 py-1 rounded-full w-fit ${
+                t.prioridade === "Alta"
+                  ? "bg-red-100 text-red-700"
+                  : t.prioridade === "Média"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-700"
+              }">${t.prioridade} prioridade</p>`
+            : ""
+        }
+      </div>
+    </div>
+
+    <button 
+      class="text-red-500 hover:text-red-700 text-sm font-medium transition ml-4 flex items-center gap-1">
+      <i class="fa-solid fa-trash"></i> Remover
+    </button>
+  </div>
+`;
+
+
         listaTarefas.appendChild(div);
 
-        // Botão remover
         div.querySelector("button").addEventListener("click", async () => {
-          const id = div.querySelector("button").dataset.id;
-          await fetch(`/delete_tarefa/${id}`, { method: "DELETE" });
+          await fetch(`/delete_tarefa/${t.id}`, { method: "DELETE" });
           carregarTarefas();
         });
       });
+
     } catch (err) {
       console.error(err);
     }
@@ -964,6 +1003,8 @@ carregarGastos();
 
   carregarTarefas();
 });
+
+// ✅ checkbox de concluir tarefa
 
 
     // -------------------------
