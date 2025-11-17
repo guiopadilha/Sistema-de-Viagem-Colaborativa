@@ -126,29 +126,56 @@ def dashboard():
     room_ids = [s["room_id"] for s in salas_user]
 
     tarefas_pendentes_count = 0
+    enquetes_abertas_count = 0
+    total_gastos = 0
 
     if room_ids:
         placeholders = ",".join(["%s"] * len(room_ids))
 
-        # Contar somente tarefas pendentes das salas do usuário
+        # ----------------------------------------------------
+        # 🟢 Contar tarefas pendentes
+        # ----------------------------------------------------
         cursor.execute(f"""
             SELECT COUNT(*) AS total
             FROM tarefas
             WHERE status = 'pendente'
             AND room_id IN ({placeholders})
         """, room_ids)
-
         tarefas_pendentes_count = cursor.fetchone()["total"]
+
+        # ----------------------------------------------------
+        # 🟡 Contar enquetes abertas
+        # ----------------------------------------------------
+        cursor.execute(f"""
+            SELECT COUNT(*) AS total
+            FROM enquetes
+            WHERE status = 'aberta'
+            AND room_id IN ({placeholders})
+        """, room_ids)
+        enquetes_abertas_count = cursor.fetchone()["total"]
+
+        # ----------------------------------------------------
+        # 🟣 Somar total de gastos das salas do usuário
+        # ----------------------------------------------------
+        cursor.execute(f"""
+            SELECT SUM(valor) AS total
+            FROM gastos
+            WHERE room_id IN ({placeholders})
+        """, room_ids)
+
+        result = cursor.fetchone()
+        total_gastos = result["total"] if result["total"] is not None else 0
 
     cursor.close()
     conn.close()
 
-    # RETORNO — nada pode ficar depois disso
     return render_template(
         "dashboard.html",
         viagens=viagens,
         destinos=destinos,
-        tarefas_pendentes=tarefas_pendentes_count
+        tarefas_pendentes=tarefas_pendentes_count,
+        enquetes_abertas=enquetes_abertas_count,
+        total_gastos=total_gastos
     )
 
 @app.route("/check_email", methods=["POST"])
