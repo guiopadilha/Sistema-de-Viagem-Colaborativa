@@ -105,9 +105,11 @@ def dashboard():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
+    # Viagens criadas pelo usuário
     cursor.execute("SELECT * FROM viagens WHERE id_criador = %s", (user_id,))
     viagens = cursor.fetchall()
 
+    # Destinos das viagens
     cursor.execute("""
         SELECT d.* FROM destinos d
         JOIN viagens v ON d.id_destino = v.id_destino
@@ -115,10 +117,40 @@ def dashboard():
     """, (user_id,))
     destinos = cursor.fetchall()
 
+    # -----------------------------------------------------------
+    # 🔥 Salas em que o usuário participa
+    # -----------------------------------------------------------
+    cursor.execute("SELECT room_id FROM user_rooms WHERE user_id = %s", (user_id,))
+    salas_user = cursor.fetchall()
+
+    room_ids = [s["room_id"] for s in salas_user]
+
+    tarefas_pendentes_count = 0
+
+    if room_ids:
+        placeholders = ",".join(["%s"] * len(room_ids))
+
+        # Contar somente tarefas pendentes das salas do usuário
+        cursor.execute(f"""
+            SELECT COUNT(*) AS total
+            FROM tarefas
+            WHERE status = 'pendente'
+            AND room_id IN ({placeholders})
+        """, room_ids)
+
+        tarefas_pendentes_count = cursor.fetchone()["total"]
+
     cursor.close()
     conn.close()
 
-    return render_template("dashboard.html", viagens=viagens, destinos=destinos)
+    # RETORNO — nada pode ficar depois disso
+    return render_template(
+        "dashboard.html",
+        viagens=viagens,
+        destinos=destinos,
+        tarefas_pendentes=tarefas_pendentes_count
+    )
+
 @app.route("/check_email", methods=["POST"])
 def check_email():
     email = request.form.get("email")
@@ -819,8 +851,37 @@ def excluir_enquete(enquete_id):
         conn.close()
         return jsonify({"success": False, "message": "Erro ao excluir enquete", "error": str(e)}), 500
     
-    
-    
+@app.route("/get_dashboard_totals/<int:room_id>")
+def get_dashboard_totals(room_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # 🔹 Total de roteiros
+    cursor.execute("SELECT COUNT(*) AS total_roteiros FROM roteiros WHERE room_id = %s", (room_id,))
+    total_roteiros = cursor.fetchone()["total_roteiros"]
+
+    # 🔹 Total de tarefas pendentes e de alta prioridade (exemplo: prioridade = campo que pode ser adicionado futuramente)
+    cursor.execute("SELECT COUNT(*) AS total_pendentes FROM tarefas WHERE room_id = %s AND status = 'pendente'", (room_id,))
+    total_pendentes = cursor.fetchone()["total_pendentes"]
+
+    # 🔹 Total de enquetes abertas
+    cursor.execute("SELECT COUNT(*) AS total_enquetes FROM enquetes WHERE room_id = %s AND status = 'aberta'", (room_id,))
+    total_enquetes = cursor.fetchone()["total_enquetes"]
+
+    # 🔹 Total de gastos
+    cursor.execute("SELECT COALESCE(SUM(valor), 0) AS total_gastos FROM gastos WHERE room_id = %s", (room_id,))
+    total_gastos = float(cursor.fetchone()["total_gastos"])
+
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        "total_roteiros": total_roteiros,
+        "total_pendentes": total_pendentes,
+        "total_enquetes": total_enquetes,
+        "total_gastos": total_gastos
+    })
+
 
 if __name__ == "__main__":
     app.run(debug=True)
