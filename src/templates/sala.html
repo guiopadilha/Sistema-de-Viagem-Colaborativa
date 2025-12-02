@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Viagens</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 flex min-h-screen font-sans">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-64 bg-white shadow-md flex flex-col justify-between fixed inset-y-0 left-0 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50">
+    <div>
+      <div class="p-6 flex items-center space-x-2">
+        <span class="text-blue-600 text-2xl">✈️</span>
+        <div>
+          <h1 class="font-bold text-lg text-gray-800">TravelTogether</h1>
+          <p class="text-sm text-gray-500">Planeje. Compartilhe. Viaje.</p>
+        </div>
+      </div>
+      <nav class="mt-6">
+        <button onclick="showSection('dashboard')" id="btn-dashboard"
+          class="w-full text-left flex items-center p-3 bg-blue-50 text-blue-600 rounded-md mx-3 mb-2">
+          <span class="mr-3">🏠</span> Dashboard
+        </button>
+        <button onclick="window.location.href='/dashboard'" id="btn-salas"
+        class="w-full text-left flex items-center p-3 hover:bg-gray-100 text-gray-700 rounded-md mx-3">
+  <span class="mr-3">👥</span> Minhas Salas
+</button>
+
+      </nav>
+      <div class="mt-8 px-6">
+  <h2 class="text-gray-500 text-sm mb-3 font-semibold">RESUMO RÁPIDO</h2>
+
+  <ul class="space-y-4">
+
+    <li class="text-gray-700">
+      <p class="font-medium">Como funciona?</p>
+      <p class="text-gray-500 text-sm">Crie salas para planejar suas viagens</p>
+    </li>
+
+    <li class="text-gray-700">
+      <p class="font-medium">Organização</p>
+      <p class="text-gray-500 text-sm">Gerencie tarefas, enquetes e roteiros</p>
+    </li>
+
+    <li class="text-gray-700">
+      <p class="font-medium">Colaboração</p>
+      <p class="text-gray-500 text-sm">Convide amigos e planejem juntos</p>
+    </li>
+
+  </ul>
+</div>
+
+    </div>
+    <div class="p-6 border-t text-gray-700">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <div class="bg-green-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+            <span id="userInitial">U</span>
+          </div>
+          <div>
+            <p class="font-medium" id="sidebarUserName">Usuário</p>
+            <p class="text-sm text-gray-500">Planeje suas próx...</p>
+          </div>
+        </div>
+        <button onclick="window.location.href='/logout'" class="ml-3 text-red-500 hover:text-red-700 text-sm">Sair</button>
+
+      </div>
+    </div>
+  </aside>
+
+  <!-- Overlay para mobile -->
+  <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 hidden z-40 md:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- Main Content -->
+  <main class="flex-1 p-4 md:p-8 md:ml-64">
+
+    <!-- Botão para abrir menu em mobile -->
+    <button onclick="toggleSidebar()" class="md:hidden mb-4 bg-blue-500 text-white px-4 py-2 rounded-md">
+      ☰ Menu
+    </button>
+
+    <!-- Container da Viagem -->
+<div id="trip-container" class="bg-white p-6 rounded-2xl shadow mb-6">
+  <div class="flex flex-wrap justify-between items-center gap-4">
+    <div>
+      <h2 class="text-xl font-bold text-gray-800" id="trip-name">{{ sala.name }}</h2>
+      <p class="text-gray-500 flex flex-wrap items-center gap-4 mt-1">
+        <span class="flex items-center gap-1">📍 
+          <span id="trip-location">{{ sala.destination }}</span>
+        </span>
+        <span class="flex items-center gap-1">📅 
+          <span id="trip-dates">
+            {{ sala.start_date.strftime('%d %b %Y') }} até {{ sala.end_date.strftime('%d %b %Y') }}
+          </span>
+        </span>
+        <span class="flex items-center gap-1">👥 
+          <span id="trip-participants">{{ participantes|length }} participante{{ 's' if participantes|length > 1 else '' }}</span>
+        </span>
+      </p>
+    </div>
+    
+  </div>
+</div>
+
+   <!-- Dashboard original e abas -->
+<div class="bg-white rounded-2xl shadow p-6">
+  <div class="flex flex-wrap gap-4 border-b pb-2 mb-6">
+    <button class="tab-btn text-blue-600 font-semibold border-b-2 border-blue-600 pb-2" data-tab="roteiro">Roteiro</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="enquetes">Enquetes</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="gastos">Gastos</button>
+    <button class="tab-btn text-gray-600 hover:text-blue-600 pb-2" data-tab="tarefas">Tarefas</button>
+   
+  </div>
+
+  <!-- ABA ROTEIRO -->
+  <div id="roteiro" class="tab-content">
+    <div id="roteiro-container" class="bg-gray-50 border rounded-2xl p-6 text-center" data-room-id="{{ sala.id }}">
+      <h2 class="text-xl font-semibold mb-3">Roteiro da Viagem</h2>
+
+    <!-- Formulário de adicionar/editar mais harmonioso -->
+<div id="form-roteiro" class="hidden mt-4 bg-white p-6 rounded-lg shadow">
+  <input type="hidden" id="roteiro-id" value="">
+
+  <!-- Linha com data e horários -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+    <div class="flex flex-col">
+      <label for="dia-input" class="text-gray-600 text-sm mb-1">Data</label>
+      <input type="date" id="dia-input" class="border p-2 rounded w-full">
+    </div>
+
+    <div class="flex flex-col">
+      <label for="hora-inicio-input" class="text-gray-600 text-sm mb-1">Horário início</label>
+      <input type="time" id="hora-inicio-input" class="border p-2 rounded w-full">
+    </div>
+
+    <div class="flex flex-col">
+      <label for="hora-fim-input" class="text-gray-600 text-sm mb-1">Horário fim</label>
+      <input type="time" id="hora-fim-input" class="border p-2 rounded w-full">
+    </div>
+  </div>
+
+  <!-- Descrição ocupa toda a largura -->
+  <div class="flex flex-col mb-4">
+    <label for="descricao-input" class="text-gray-600 text-sm mb-1">Descrição da atividade</label>
+    <textarea id="descricao-input" class="border p-2 rounded w-full" rows="3" placeholder="Descrição da atividade"></textarea>
+  </div>
+
+  <!-- Botões -->
+  <div class="flex justify-end gap-2">
+    <button id="salvar-dia" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Salvar</button>
+    <button id="cancelar-dia" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
+  </div>
+</div>
+
+
+      <!-- Lista de dias do roteiro -->
+      <div id="dias-container" class="space-y-4 text-left mt-4">
+        {% for r in roteiros %}
+          <div class="bg-white border-l-4 border-blue-500 rounded-xl p-4 shadow hover:shadow-md transition flex justify-between items-start">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <p class="text-gray-700 font-semibold">📅 {{ r.dia.strftime('%d/%m/%Y') }}</p>
+                {% if r.horario_inicio %}
+                  <p class="text-sm text-gray-500">⏰ {{ r.horario_inicio }} - {{ r.horario_fim or '--:--' }}</p>
+                {% endif %}
+              </div>
+              <p class="text-gray-600">{{ r.descricao }}</p>
+            </div>
+            <div class="flex flex-col gap-2 ml-4">
+              
+              <button class="delete-dia bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm" data-id="{{ r.id }}">
+                Excluir
+              </button>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <!-- Botão de adicionar dia -->
+      <button id="adicionar-dia" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+        + Adicionar Dia
+      </button>
+    </div>
+  </div>
+
+
+<!-- ========== ABA: ENQUETES ========== -->
+<!-- ABA ENQUETES -->
+<div id="enquetes" class="tab-content hidden" data-room-id="{{ room_id }}">
+  <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="enquetes-container">
+    <h2 class="text-xl font-semibold mb-3">Enquetes da Viagem</h2>
+    <p id="mensagem-enquete-vazia" class="text-gray-500 mb-6">Nenhuma enquete criada ainda.</p>
+
+    <!-- Lista de enquetes existentes -->
+    <div id="lista-enquetes" class="space-y-6 text-left"></div>
+
+    <!-- Formulário de criação de enquete (inicialmente escondido) -->
+    <div id="form-criar-enquete" class="hidden mt-6 bg-white p-4 rounded-xl shadow-md">
+      <input id="input-pergunta" type="text" placeholder="Digite a pergunta" class="w-full mb-3 p-2 border rounded" />
+      <textarea id="input-descricao" placeholder="Descrição (opcional)" class="w-full mb-3 p-2 border rounded"></textarea>
+      
+      <div id="opcoes-container" class="mb-3">
+        <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 1" />
+        <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 2" />
+      </div>
+      <button id="adicionar-opcao" class="mb-3 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300 transition">+ Adicionar opção</button>
+      <button id="adicionar-enquete" class="bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+        Salvar Enquete
+      </button>
+    </div>
+
+    <!-- Botão para abrir o formulário -->
+    <button id="btn-nova-enquete" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Criar Enquete
+    </button>
+  </div>
+</div>
+
+
+      <!-- Gastos -->
+      <div id="gastos" class="tab-content hidden">
+  <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="gastos-container">
+    <h2 class="text-xl font-semibold mb-3">Controle de Gastos</h2>
+
+    <div id="lista-gastos" class="space-y-4 text-left"></div>
+    <div id="total-gastos" class="mt-6 text-lg font-semibold text-gray-700 hidden">
+      Total: <span id="valor-total">R$ 0,00</span>
+    </div>
+
+    <button id="abrir-modal-gasto" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Gasto
+    </button>
+  </div>
+
+  <!-- MODAL DE NOVO GASTO -->
+  <div id="modal-gasto" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-6 w-96">
+      <h3 class="text-lg font-semibold mb-4">Novo Gasto</h3>
+      <input type="text" id="descricao" placeholder="Descrição do gasto" class="border rounded p-2 w-full mb-3">
+      <input type="number" id="valor" placeholder="Valor (R$)" class="border rounded p-2 w-full mb-3">
+      <input type="date" id="data_gasto" class="border rounded p-2 w-full mb-3">
+      <select id="categoria" class="border rounded p-2 w-full mb-3">
+        <option value="">Categoria</option>
+        <option>Transporte</option>
+        <option>Alimentação</option>
+        <option>Hospedagem</option>
+        <option>Lazer</option>
+        <option>Outros</option>
+      </select>
+      <input type="text" id="pago_por" placeholder="Pago por" class="border rounded p-2 w-full mb-3">
+      <div class="flex justify-end gap-2">
+        <button id="fechar-modal" class="bg-gray-300 px-4 py-2 rounded">Cancelar</button>
+        <button id="salvar-gasto" class="bg-emerald-500 text-white px-4 py-2 rounded">Adicionar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <!-- Tarefas -->
+      <!-- Tarefas -->
+<div id="tarefas" class="tab-content hidden">
+  <div class="bg-gray-50 border rounded-2xl p-6 text-center" id="tarefas-container">
+    
+    <h2 class="text-xl font-semibold mb-3">Tarefas da Viagem</h2>
+
+    <!-- Hidden Room ID (Flask preenche) -->
+    <input type="hidden" id="room-id" value="{{ room_id }}">
+
+    <p id="mensagem-tarefas-vazia" class="text-gray-500 mb-6">Nenhuma tarefa adicionada ainda.</p>
+
+    <!-- Lista de tarefas vindas do banco -->
+    <div id="lista-tarefas" class="space-y-4 text-left"></div>
+
+    <!-- Botão para abrir formulário -->
+    <button id="adicionar-tarefa" class="mt-6 bg-emerald-500 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-emerald-600 transition">
+      + Adicionar Tarefa
+    </button>
+
+    <!-- Formulário oculto -->
+    <div id="form-tarefa" class="hidden mt-6 bg-white p-6 rounded-lg shadow">
+
+      <!-- Nome da Tarefa -->
+      <div class="flex flex-col mb-4">
+        <label class="text-gray-600 text-sm mb-1">Nome da Tarefa</label>
+        <input type="text" id="nome-tarefa" name="titulo" class="border p-2 rounded w-full" placeholder="Digite o nome da tarefa">
+      </div>
+
+      <!-- Selecionar responsável -->
+      <div class="flex flex-col mb-4">
+        <label class="text-gray-600 text-sm mb-1">Responsável</label>
+        <input type="text" id="responsavel-tarefa" name="responsavel" 
+class="border p-2 rounded w-full" placeholder="Digite o responsável">
+
+      </div>
+
+      <!-- Selecionar prioridade -->
+      <div class="flex flex-col mb-4">
+        <label class="text-gray-600 text-sm mb-1">Prioridade</label>
+        <select id="prioridade-tarefa" name="prioridade" class="border p-2 rounded w-full">
+          <option value="Alta">Alta</option>
+          <option value="Média">Média</option>
+          <option value="Baixa">Baixa</option>
+        </select>
+      </div>
+
+      <!-- Botões -->
+      <div class="flex justify-end gap-2">
+        <button id="salvar-tarefa" class="bg-emerald-500 text-white px-4 py-2 rounded hover:bg-emerald-600">Salvar</button>
+        <button id="cancelar-tarefa" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+     
+
+<!-- ========== MODAL: CRIAR ENQUETE (fora da aba, no fim do body) ========== -->
+<div id="modal-enquete" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+  <div class="bg-white p-6 rounded-lg w-96 shadow">
+    <h2 class="text-lg font-bold mb-3">Criar Enquete</h2>
+
+    <input id="titulo-enquete" type="text" placeholder="Título" class="w-full border p-2 mb-2 rounded" />
+    <textarea id="descricao-enquete" placeholder="Descrição (opcional)" class="w-full border p-2 mb-2 rounded"></textarea>
+
+    <div id="opcoes-container" class="mb-2">
+      <input type="text" class="opcao-input w-full border p-2 mb-2 rounded" placeholder="Opção 1" />
+      <input type="text" class="opcao-input w-full border p-2 mb-2 rounded" placeholder="Opção 2" />
+    </div>
+
+    <div class="flex items-center gap-2 mb-3">
+      <button id="add-opcao" class="bg-gray-200 px-3 py-1 rounded text-sm">+ Opção</button>
+      <button id="limpar-opcoes" class="bg-gray-100 px-3 py-1 rounded text-sm">Limpar</button>
+    </div>
+
+    <div class="flex justify-between mt-3">
+      <button id="fechar-modal-enquete" class="bg-gray-400 text-white px-4 py-2 rounded">Cancelar</button>
+      <button id="salvar-enquete" class="bg-blue-600 text-white px-4 py-2 rounded">Salvar</button>
+    </div>
+  </div>
+</div>
+  <script>
+    // Interatividade das abas
+    const tabs = document.querySelectorAll(".tab-btn");
+    const contents = document.querySelectorAll(".tab-content");
+
+    tabs.forEach(tab => {
+      tab.addEventListener("click", () => {
+        const target = tab.getAttribute("data-tab");
+        tabs.forEach(btn => btn.classList.remove("text-blue-600", "font-semibold", "border-b-2", "border-blue-600"));
+        tab.classList.add("text-blue-600", "font-semibold", "border-b-2", "border-blue-600");
+        contents.forEach(content => content.classList.add("hidden"));
+        document.getElementById(target).classList.remove("hidden");
+      });
+    });
+
+    // -------------------------
+    // Roteiro da viagem
+    const btnAdicionarDia = document.getElementById("adicionar-dia");
+    const diasContainer = document.getElementById("dias-container");
+    const mensagemVazia = document.getElementById("mensagem-vazia");
+    let contadorDias = 0;
+
+    btnAdicionarDia.addEventListener("click", () => {
+      mensagemVazia.classList.add("hidden");
+      contadorDias++;
+
+      const diaDiv = document.createElement("div");
+      diaDiv.className = "bg-white p-4 border rounded-xl shadow-sm";
+      diaDiv.innerHTML = `
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-lg font-semibold">Dia ${contadorDias}</h3>
+          <button class="text-red-500 hover:text-red-700 text-sm font-medium remover-dia">Remover dia</button>
+        </div>
+        <div class="atividades space-y-3"></div>
+        <button class="mt-3 bg-blue-500 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-600 adicionar-atividade">
+          + Adicionar Atividade
+        </button>
+      `;
+      diasContainer.appendChild(diaDiv);
+
+      // Remover dia
+      diaDiv.querySelector(".remover-dia").addEventListener("click", () => {
+        diaDiv.remove();
+        if (diasContainer.children.length === 0) {
+          mensagemVazia.classList.remove("hidden");
+          contadorDias = 0;
+        }
+      });
+
+      // Adicionar atividade
+      diaDiv.querySelector(".adicionar-atividade").addEventListener("click", () => {
+        const atividadesContainer = diaDiv.querySelector(".atividades");
+        const atividadeDiv = document.createElement("div");
+        atividadeDiv.className = "flex flex-col md:flex-row md:items-center justify-between gap-2 bg-gray-50 p-2 rounded-lg border";
+        atividadeDiv.innerHTML = `
+          <div class="flex-1 flex flex-wrap gap-2 items-center">
+            <input type="time" class="border rounded p-1 text-sm" />
+            <input type="text" placeholder="Descrição da atividade" class="border rounded p-1 text-sm flex-1" />
+          </div>
+          <button class="text-red-500 hover:text-red-700 text-xs remover-atividade">Remover</button>
+        `;
+        atividadesContainer.appendChild(atividadeDiv);
+
+        // Remover atividade
+        atividadeDiv.querySelector(".remover-atividade").addEventListener("click", () => {
+          atividadeDiv.remove();
+        });
+      });
+    });
+
+    // -------------------------
+    // Enquetes
+
+// ---------- Enquetes: bloco único, sem duplicação ----------
+// pega roomId do container
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btnNovaEnquete = document.getElementById("btn-nova-enquete");
+  const formCriarEnquete = document.getElementById("form-criar-enquete");
+  const btnAdicionarOpcao = document.getElementById("adicionar-opcao");
+  const listaOpcoesContainer = document.getElementById("opcoes-container");
+  const btnSalvarEnquete = document.getElementById("adicionar-enquete");
+  const inputPergunta = document.getElementById("input-pergunta");
+  const inputDescricao = document.getElementById("input-descricao");
+  const listaEnquetes = document.getElementById("lista-enquetes");
+  const mensagemVazia = document.getElementById("mensagem-enquete-vazia");
+  const roomId = document.getElementById("enquetes").dataset.roomId;
+
+  // Mostrar/ocultar formulário
+  btnNovaEnquete.addEventListener("click", () => {
+    formCriarEnquete.classList.remove("hidden");
+    btnNovaEnquete.classList.add("hidden");
+  });
+
+  // Adicionar nova opção
+  btnAdicionarOpcao.addEventListener("click", (e) => {
+    e.preventDefault();
+    const novaOpcao = document.createElement("input");
+    novaOpcao.type = "text";
+    novaOpcao.className = "opcao w-full mb-2 p-2 border rounded";
+    novaOpcao.placeholder = `Opção ${listaOpcoesContainer.querySelectorAll("input.opcao").length + 1}`;
+    listaOpcoesContainer.appendChild(novaOpcao);
+  });
+
+  // Coletar opções
+  function coletarOpcoes() {
+    const opcoes = [];
+    listaOpcoesContainer.querySelectorAll("input.opcao").forEach(input => {
+      if (input.value.trim() !== "") opcoes.push(input.value.trim());
+    });
+    return opcoes;
+  }
+
+  function criarCardEnquete(enquete) {
+  // Evita duplicar card
+  let card = document.getElementById(`enquete-${enquete.id}`);
+  if (!card) {
+    card = document.createElement("div");
+    card.id = `enquete-${enquete.id}`;
+    card.className = "enquete-card border p-3 rounded shadow mb-4";
+    listaEnquetes.appendChild(card);
+  } else {
+    card.innerHTML = ""; // limpa conteúdo existente
+  }
+
+  // Título
+  const titulo = document.createElement("h3");
+  titulo.className = "font-semibold";
+  titulo.textContent = enquete.titulo;
+  card.appendChild(titulo);
+
+  // Descrição
+  if (enquete.descricao) {
+    const descricao = document.createElement("p");
+    descricao.textContent = enquete.descricao;
+    card.appendChild(descricao);
+  }
+
+  // Lista de opções com botões de voto
+  const lista = document.createElement("ul");
+  lista.className = "list-disc pl-5 mb-2";
+
+  // Inicializa votos se não existir
+if (!enquete.votos) enquete.votos = new Array(enquete.opcoes.length).fill(0);
+
+const totalVotos = enquete.votos.reduce((a, b) => a + b, 0) || 1;
+
+enquete.opcoes.forEach((opcao, idx) => {
+  const li = document.createElement("li");
+  li.className =
+    "mb-3 bg-white shadow-sm border rounded-xl p-3 transition hover:shadow-md";
+
+  const linha = document.createElement("div");
+  linha.className = "flex justify-between items-center mb-2";
+
+  const votos = enquete.votos[idx];
+  const pct = Math.round((votos / totalVotos) * 100);
+
+  const nomeOpcao = document.createElement("span");
+  nomeOpcao.className = "font-semibold text-gray-700";
+  nomeOpcao.textContent = opcao;
+
+  const contagem = document.createElement("span");
+  contagem.className = "text-sm text-gray-500 ml-2";
+  contagem.textContent = `${votos} voto(s) • ${pct}%`;
+
+  linha.appendChild(nomeOpcao);
+  linha.appendChild(contagem);
+
+  if (enquete.status === "aberta") {
+    const btn = document.createElement("button");
+    btn.className =
+      "ml-2 px-3 py-1 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition";
+    btn.textContent = "Votar";
+
+    btn.addEventListener("click", async () => {
+      const resp = await fetch(`/votar_enquete/${enquete.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ opcao_idx: idx })
+      });
+
+      const data = await resp.json();
+      if (data.success) {
+        enquete.votos[idx]++;
+        criarCardEnquete(enquete);
+      } else {
+        alert(data.message);
+      }
+    });
+
+    linha.appendChild(btn);
+  }
+
+  li.appendChild(linha);
+
+  const barra = document.createElement("div");
+  barra.className = "w-full h-3 bg-gray-200 rounded-md overflow-hidden";
+
+  const fill = document.createElement("div");
+  fill.className = "h-full bg-blue-500 rounded-md transition-all";
+  fill.style.width = pct + "%";
+
+  barra.appendChild(fill);
+  li.appendChild(barra);
+
+  lista.appendChild(li);
+});
+
+card.appendChild(lista);
+
+// Botão excluir pequeno
+if (enquete.status === "aberta") {
+  const btnExcluir = document.createElement("button");
+  btnExcluir.textContent = "Excluir";
+  btnExcluir.className =
+    "px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs font-medium mt-2";
+
+  btnExcluir.addEventListener("click", async () => {
+    if (!confirm("Excluir esta enquete?")) return;
+
+    const resp = await fetch(`/excluir_enquete/${enquete.id}`, {
+      method: "DELETE"
+    });
+    const data = await resp.json();
+
+    if (data.success) carregarEnquetes();
+  });
+
+  const actions = document.createElement("div");
+  actions.className = "flex justify-end";
+  actions.appendChild(btnExcluir);
+  card.appendChild(actions);
+}
+
+// Status tag
+const status = document.createElement("div");
+status.className =
+  "inline-block mt-2 px-3 py-1 text-xs rounded-full font-semibold " +
+  (enquete.status === "aberta"
+    ? "bg-green-100 text-green-700"
+    : "bg-gray-200 text-gray-600");
+
+status.textContent =
+  enquete.status === "aberta" ? "🟢 Enquete aberta" : "🔒 Enquete encerrada";
+
+card.appendChild(status);
+  }
+  // Carregar enquetes do servidor
+  async function carregarEnquetes() {
+    try {
+      const resp = await fetch(`/enquetes/${roomId}`);
+      const data = await resp.json();
+      listaEnquetes.innerHTML = "";
+
+      if (data && data.enquetes && data.enquetes.length > 0) {
+        data.enquetes.forEach(enquete => criarCardEnquete(enquete));
+        mensagemVazia.classList.add("hidden");
+      } else {
+        mensagemVazia.classList.remove("hidden");
+      }
+    } catch (err) {
+      console.error("Erro ao carregar enquetes:", err);
+    }
+  }
+
+  // Salvar enquete
+  btnSalvarEnquete.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const pergunta = inputPergunta.value.trim();
+    const descricao = inputDescricao.value.trim();
+    const opcoes = coletarOpcoes();
+
+    if (!pergunta) return alert("Digite a pergunta da enquete.");
+    if (opcoes.length < 2) return alert("Adicione pelo menos duas opções.");
+
+    btnSalvarEnquete.disabled = true;
+    btnSalvarEnquete.textContent = "Salvando...";
+
+    try {
+      const resp = await fetch("/criar_enquete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_id: roomId,
+          titulo: pergunta,
+          descricao: descricao,
+          opcoes: opcoes,
+          status: "aberta"
+        })
+      });
+
+      const data = await resp.json();
+
+      if (data && data.success) {
+        // Limpar formulário
+        inputPergunta.value = "";
+        inputDescricao.value = "";
+        listaOpcoesContainer.innerHTML = `
+          <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 1" />
+          <input type="text" class="opcao w-full mb-2 p-2 border rounded" placeholder="Opção 2" />
+        `;
+        formCriarEnquete.classList.add("hidden");
+        btnNovaEnquete.classList.remove("hidden");
+
+        // Atualizar lista de enquetes
+        await carregarEnquetes();
+        alert("Enquete salva com sucesso!");
+      } else {
+        console.error("Erro ao salvar enquete:", data);
+        alert("Erro ao salvar enquete no servidor.");
+      }
+    } catch (err) {
+      console.error("Erro de comunicação ao salvar enquete:", err);
+      alert("Erro de comunicação com o servidor.");
+    } finally {
+      btnSalvarEnquete.disabled = false;
+      btnSalvarEnquete.textContent = "Salvar Enquete";
+    }
+  });
+
+  // Carrega enquetes ao iniciar
+  carregarEnquetes();
+});
+// Função para criar card visual com botões de voto
+function criarCardEnquete(enquete) {
+  const card = document.createElement("div");
+  card.className = "enquete-card border p-3 rounded shadow mb-4";
+  card.innerHTML = `
+    <h3 class="font-semibold">${enquete.titulo}</h3>
+    ${enquete.descricao ? `<p>${enquete.descricao}</p>` : ""}
+    <div class="opcoes-container mt-2"></div>
+    <small>Status: ${enquete.status}</small>
+  `;
+
+  const opcoesContainer = card.querySelector(".opcoes-container");
+
+  if (enquete.status === "aberta") {
+    // criar botão para cada opção
+    enquete.opcoes.forEach((opcao, idx) => {
+      const btn = document.createElement("button");
+      btn.textContent = opcao;
+      btn.className = "vote-btn bg-blue-500 text-white px-3 py-1 rounded m-1 hover:bg-blue-600 transition";
+      btn.addEventListener("click", async () => {
+        // enviar voto para o back-end
+        try {
+          const resp = await fetch(`/votar_enquete/${enquete.id}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ opcao_idx: idx })
+          });
+          const data = await resp.json();
+          if (data.success) {
+            alert("Voto registrado!");
+            // opcional: desabilitar os botões após votar
+            opcoesContainer.querySelectorAll("button").forEach(b => b.disabled = true);
+          } else {
+            alert("Erro ao registrar votoa: " + data.message);
+          }
+        } catch (err) {
+          console.error(err);
+          alert("Erro de comunicação com o servidor.");
+        }
+      });
+      opcoesContainer.appendChild(btn);
+    });
+  } else {
+    opcoesContainer.innerHTML = "<em>Enquete fechada</em>";
+  }
+
+  listaEnquetes.appendChild(card);
+}
+
+function excluirEnquete(id) {
+    if (!confirm("Tem certeza que deseja excluir esta enquete?")) return;
+
+    fetch(`/excluir_enquete/${id}`, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert("Enquete excluída!");
+            carregarEnquetes(); // recarrega lista
+        } else {
+            alert("Erro ao excluir: " + data.message);
+        }
+    })
+    .catch(err => console.error("Erro ao excluir enquete:", err));
+}
+
+    // -------------------------
+    // Gastos
+const currentRoomId = "{{ room_id }}";
+
+const listaGastos = document.getElementById("lista-gastos");
+const valorTotalSpan = document.getElementById("valor-total");
+const totalDiv = document.getElementById("total-gastos");
+let total = 0;
+
+function formatarMoeda(v) {
+  return v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
+
+async function carregarGastos() {
+  const res = await fetch(`/get_gastos/${currentRoomId}`);
+  const dados = await res.json();
+  listaGastos.innerHTML = "";
+  total = 0;
+
+  if (dados.length === 0) {
+    listaGastos.innerHTML = "<p class='text-gray-500'>Nenhum gasto registrado ainda.</p>";
+    totalDiv.classList.add("hidden");
+    return;
+  }
+
+  dados.forEach(g => {
+    total += parseFloat(g.valor);
+    const div = document.createElement("div");
+    div.className = "bg-white p-4 border rounded-xl shadow-sm flex justify-between items-center";
+    div.innerHTML = `
+      <div>
+        <p class="font-medium">${g.descricao}</p>
+        <p class="text-gray-500 text-sm">${g.categoria || "Outros"} — Pago por ${g.pago_por || "N/A"}</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="font-semibold">${formatarMoeda(parseFloat(g.valor))}</span>
+        <button class="bg-red-500 text-white px-2 py-1 rounded excluir-gasto" data-id="${g.id}">Excluir</button>
+      </div>
+    `;
+    listaGastos.appendChild(div);
+});
+
+
+  valorTotalSpan.textContent = formatarMoeda(total);
+  totalDiv.classList.remove("hidden");
+}
+
+// --- Modal ---
+const modal = document.getElementById("modal-gasto");
+document.getElementById("abrir-modal-gasto").onclick = () => modal.classList.remove("hidden");
+document.getElementById("fechar-modal").onclick = () => modal.classList.add("hidden");
+
+// --- Salvar gasto ---
+document.getElementById("salvar-gasto").onclick = async () => {
+  const descricao = document.getElementById("descricao").value.trim();
+  const valor = document.getElementById("valor").value;
+  const data_gasto = document.getElementById("data_gasto").value;
+  const categoria = document.getElementById("categoria").value;
+  const pago_por = document.getElementById("pago_por").value.trim();
+
+  if (!descricao || !valor || parseFloat(valor) <= 0 || !data_gasto) {
+    alert("Preencha todos os campos obrigatórios!");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("room_id", currentRoomId);
+  formData.append("descricao", descricao);
+  formData.append("valor", valor);
+  formData.append("data_gasto", data_gasto);
+  formData.append("categoria", categoria);
+  formData.append("pago_por", pago_por);
+
+  const resp = await fetch("/add_gasto", {
+    method: "POST",
+    body: formData
+  });
+
+  if (resp.ok) {
+    modal.classList.add("hidden");
+    // limpa campos do modal
+    document.getElementById("descricao").value = "";
+    document.getElementById("valor").value = "";
+    document.getElementById("data_gasto").value = "";
+    document.getElementById("categoria").value = "";
+    document.getElementById("pago_por").value = "";
+    carregarGastos();
+  } else {
+    const erro = await resp.json();
+    alert("Erro ao salvar gasto: " + (erro.message || "Desconhecido"));
+  }
+};
+// Delegação de evento para excluir gasto
+listaGastos.addEventListener("click", async (e) => {
+    if (!e.target.classList.contains("excluir-gasto")) return;
+
+    const id = e.target.dataset.id;
+    if (!confirm("Tem certeza que deseja excluir este gasto?")) return;
+
+    const formData = new FormData();
+    formData.append("id", id);
+
+    const resp = await fetch("/excluir_gasto", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await resp.json();
+    if (data.status === "success") {
+        carregarGastos(); // atualiza a lista
+    } else {
+        alert("Erro ao excluir gasto: " + (data.message || "Desconhecido"));
+    }
+});
+
+// Carrega os gastos ao abrir a página
+carregarGastos();
+    // -------------------------
+    // Tarefas
+    
+ document.addEventListener("DOMContentLoaded", () => {
+  const btnAdicionarTarefa = document.getElementById("adicionar-tarefa");
+  const listaTarefas = document.getElementById("lista-tarefas");
+  const mensagemTarefasVazia = document.getElementById("mensagem-tarefas-vazia");
+  const formTarefa = document.getElementById("form-tarefa");
+  const btnSalvarTarefa = document.getElementById("salvar-tarefa");
+  const btnCancelarTarefa = document.getElementById("cancelar-tarefa");
+  const inputNome = document.getElementById("nome-tarefa");
+  const inputResponsavel = document.getElementById("responsavel-tarefa");
+  const selectPrioridade = document.getElementById("prioridade-tarefa");
+
+  // Mostrar formulário
+  btnAdicionarTarefa.addEventListener("click", () => {
+    formTarefa.classList.remove("hidden");
+    btnAdicionarTarefa.classList.add("hidden");
+  });
+
+  // Cancelar formulário
+  btnCancelarTarefa.addEventListener("click", (e) => {
+    e.preventDefault();
+    formTarefa.classList.add("hidden");
+    btnAdicionarTarefa.classList.remove("hidden");
+    inputNome.value = "";
+    inputResponsavel.value = "";
+    selectPrioridade.value = "Baixa";
+  });
+
+  // Salvar tarefa
+  btnSalvarTarefa.addEventListener("click", async (e) => {
+    e.preventDefault();
+
+    const titulo = inputNome.value.trim();
+    const responsavel = inputResponsavel.value.trim();
+    const prioridade = selectPrioridade.value;
+    const roomId = document.getElementById("room-id").value;
+
+    if (!titulo) return alert("Digite o nome da tarefa!");
+
+    try {
+      const resp = await fetch("/add_tarefa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          room_id: roomId,
+          titulo: titulo,
+          responsavel: responsavel,
+          descricao: "",
+          prazo: null,
+          status: "pendente"
+        })
+      });
+
+      const data = await resp.json();
+      if (data.success) {
+        inputNome.value = "";
+        inputResponsavel.value = "";
+        selectPrioridade.value = "Baixa";
+
+        formTarefa.classList.add("hidden");
+        btnAdicionarTarefa.classList.remove("hidden");
+        
+        carregarTarefas();
+      } else {
+        alert("Erro ao salvar tarefa");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Erro de comunicação com o servidor");
+    }
+  });
+
+  // Carregar tarefas
+  async function carregarTarefas() {
+    const roomId = document.getElementById("room-id").value;
+
+    try {
+      const resp = await fetch(`/get_tarefas/${roomId}`);
+      const tarefas = await resp.json();
+
+      listaTarefas.innerHTML = "";
+
+      if (!tarefas || tarefas.length === 0) {
+        mensagemTarefasVazia.classList.remove("hidden");
+        return;
+      }
+
+      mensagemTarefasVazia.classList.add("hidden");
+
+      tarefas.forEach(t => {
+        const div = document.createElement("div");
+        div.className = "bg-white p-4 border rounded-xl flex justify-between items-center";
+
+       div.innerHTML = `
+  <div class="flex justify-between items-center w-full bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-lg transition-all duration-200">
+    <div class="flex items-center gap-4">
+      <input 
+        type="checkbox" 
+        class="marcar-concluida accent-green-600 cursor-pointer w-5 h-5 mt-1" 
+        data-id="${t.id}" 
+        ${t.status === "concluida" ? "checked" : ""}
+      >
+
+      <div>
+        <p class="font-semibold text-gray-800 text-lg leading-tight ${t.status === "concluida" ? "line-through text-gray-400" : ""}">
+          ${t.titulo}
+        </p>
+
+        <p class="text-sm text-gray-500 mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-user text-purple-600"></i>
+          <span class="font-medium">${t.responsavel || "Sem responsável"}</span>
+        </p>
+
+        ${
+          t.prioridade
+            ? `<p class="text-xs mt-2 font-medium px-3 py-1 rounded-full w-fit ${
+                t.prioridade === "Alta"
+                  ? "bg-red-100 text-red-700"
+                  : t.prioridade === "Média"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-700"
+              }">${t.prioridade} prioridade</p>`
+            : ""
+        }
+      </div>
+    </div>
+
+    <button 
+      class="text-red-500 hover:text-red-700 text-sm font-medium transition ml-4 flex items-center gap-1">
+      <i class="fa-solid fa-trash"></i> Remover
+    </button>
+  </div>
+`;
+
+
+        listaTarefas.appendChild(div);
+
+        // --- BOTÃO REMOVER ---
+        const btnRemover = div.querySelector("button");
+        if (btnRemover) {
+          btnRemover.addEventListener("click", async () => {
+            try {
+              await fetch(`/delete_tarefa/${t.id}`, { method: "DELETE" });
+              carregarTarefas();
+            } catch (err) {
+              console.error("Erro ao remover tarefa:", err);
+              alert("Erro ao remover tarefa.");
+            }
+          });
+        }
+
+        // --- CHECKBOX CONCLUIR ---
+        const checkbox = div.querySelector(".marcar-concluida");
+        if (checkbox) {
+          checkbox.addEventListener("change", async (e) => {
+            const novoStatus = e.target.checked ? "concluida" : "pendente";
+
+            try {
+              const r = await fetch(`/update_tarefa_status/${t.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status: novoStatus })
+              });
+
+              if (!r.ok) throw new Error("Falha ao atualizar status");
+
+              // Atualiza aparência visual sem recarregar tudo
+              const tituloEl = div.querySelector("p.font-semibold");
+              if (tituloEl) {
+                if (novoStatus === "concluida") {
+                  tituloEl.classList.add("line-through", "text-gray-400");
+                } else {
+                  tituloEl.classList.remove("line-through", "text-gray-400");
+                }
+              }
+            } catch (err) {
+              console.error("Erro ao atualizar status:", err);
+              alert("Erro ao salvar o status da tarefa.");
+              // Reverte o checkbox visualmente se der erro
+              e.target.checked = !e.target.checked;
+            }
+          });
+        }
+
+      }); // end forEach
+
+    } catch (err) {
+      console.error(err);
+      mensagemTarefasVazia.classList.remove("hidden");
+    }
+  } // end carregarTarefas
+
+  // Escapa texto para evitar XSS caso dados venham direto do DB
+  function escapeHtml(text) {
+    if (!text && text !== 0) return "";
+    return String(text)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  // Chama ao carregar a página
+  carregarTarefas();
+}); // end DOMContentLoaded
+
+// ✅ checkbox de concluir tarefa
+
+
+    // -------------------------
+   
+    // -------------------------
+    // Sidebar interativa
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('overlay').classList.toggle('hidden');
+    }
+
+    function showSection(section) {
+      document.getElementById('dashboard').classList.add('hidden');
+      document.getElementById('salas').classList.add('hidden');
+      document.getElementById(section).classList.remove('hidden');
+
+      document.getElementById('btn-dashboard').classList.remove('bg-blue-50','text-blue-600'); 
+      document.getElementById('btn-dashboard').classList.add('text-gray-700');
+      document.getElementById('btn-salas').classList.remove('bg-blue-50','text-blue-600'); 
+      document.getElementById('btn-salas').classList.add('text-gray-700');
+      if(section==='dashboard'){document.getElementById('btn-dashboard').classList.add('bg-blue-50','text-blue-600');}
+      if(section==='salas'){document.getElementById('btn-salas').classList.add('bg-blue-50','text-blue-600');}
+    }
+
+    // Dados de usuário
+    const user = { name: "Viajante" };
+    document.getElementById('sidebarUserName').textContent = user.name;
+    document.getElementById('userInitial').textContent = user.name.charAt(0).toUpperCase();
+
+    function logout(){ alert('Logout realizado'); }
+
+    const adicionarBtn = document.getElementById('adicionar-dia');
+const formRoteiro = document.getElementById('form-roteiro');
+const salvarBtn = document.getElementById('salvar-dia');
+const cancelarBtn = document.getElementById('cancelar-dia');
+
+const roomContainer = document.getElementById('roteiro-container');
+const roomId = roomContainer.dataset.roomId; // pega o ID da sala do atributo HTML
+
+adicionarBtn.addEventListener('click', () => formRoteiro.classList.remove('hidden'));
+
+cancelarBtn.addEventListener('click', () => {
+  formRoteiro.classList.add('hidden');
+  document.getElementById('dia-input').value = '';
+  document.getElementById('hora-inicio-input').value = '';
+  document.getElementById('hora-fim-input').value = '';
+  document.getElementById('descricao-input').value = '';
+});
+
+salvarBtn.addEventListener('click', async () => {
+  const dia = document.getElementById('dia-input').value;
+  const horario_inicio = document.getElementById('hora-inicio-input').value;
+  const horario_fim = document.getElementById('hora-fim-input').value;
+  const descricao = document.getElementById('descricao-input').value;
+
+  if (!dia || !descricao) {
+    alert("Preencha pelo menos a data e a descrição!");
+    return;
+  }
+
+  const response = await fetch('/adicionar_roteiro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      room_id: roomId,
+      dia: dia,
+      horario_inicio: horario_inicio,
+      horario_fim: horario_fim,
+      descricao: descricao
+    })
+  });
+
+  if (response.ok) location.reload();
+  else alert("Erro ao salvar roteiro");
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('form-roteiro'); // seu formulário existente
+  const roteiroIdInput = document.getElementById('roteiro-id'); // campo hidden que você já tem ou cria
+  const cancelarBtn = document.getElementById('cancelar-edicao') || null;
+  const salvarBtn = document.getElementById('salvar-roteiro');
+
+  document.addEventListener('DOMContentLoaded', () => {
+
+  const form = document.getElementById('form-roteiro');
+  const roteiroIdInput = document.getElementById('roteiro-id');
+  const diaInput = document.getElementById('dia-input');
+  const descricaoInput = document.getElementById('descricao-input');
+  const horaInicioInput = document.getElementById('hora-inicio-input');
+  const horaFimInput = document.getElementById('hora-fim-input');
+  const salvarBtn = document.getElementById('salvar-dia');
+  const cancelarBtn = document.getElementById('cancelar-dia');
+  const diasContainer = document.getElementById('dias-container');
+  const roomId = document.getElementById('roteiro-container').dataset.roomId;
+
+  // === Editar roteiro ===
+  diasContainer.querySelectorAll('.edit-dia').forEach(button => {
+    button.addEventListener('click', () => {
+      // Preenche o formulário com os dados do roteiro selecionado
+      roteiroIdInput.value = button.dataset.id;
+      diaInput.value = button.dataset.dia;
+      descricaoInput.value = button.dataset.descricao;
+      horaInicioInput.value = button.dataset.inicio;
+      horaFimInput.value = button.dataset.fim;
+
+      // Altera o texto do botão e mostra o formulário
+      salvarBtn.textContent = 'Atualizar Roteiro';
+      cancelarBtn.classList.remove('hidden');
+      form.classList.remove('hidden');
+      form.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // === Cancelar edição ===
+  cancelarBtn.addEventListener('click', () => {
+    roteiroIdInput.value = '';
+    diaInput.value = '';
+    descricaoInput.value = '';
+    horaInicioInput.value = '';
+    horaFimInput.value = '';
+    salvarBtn.textContent = 'Adicionar Roteiro';
+    cancelarBtn.classList.add('hidden');
+    form.classList.add('hidden');
+  });
+
+  // === Salvar edição ===
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const roteiroId = roteiroIdInput.value;
+    if (!roteiroId) return; // Se não for edição, o fluxo de adicionar já cuida
+
+    const payload = {
+      dia: diaInput.value,
+      descricao: descricaoInput.value,
+      inicio: horaInicioInput.value,
+      fim: horaFimInput.value
+    };
+
+    try {
+      const res = await fetch(`/editar_roteiro/${roteiroId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        location.reload();
+      } else {
+        alert('Erro ao atualizar roteiro.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao atualizar roteiro.');
+    }
+  });
+
+});
+
+  // === Excluir roteiro ===
+  document.querySelectorAll('.delete-dia').forEach(button => {
+    button.addEventListener('click', async () => {
+      if (!confirm('Tem certeza que deseja excluir este roteiro?')) return;
+      const id = button.dataset.id;
+
+      try {
+        const response = await fetch('/excluir_roteiro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `id=${encodeURIComponent(id)}`
+        });
+        const data = await response.json();
+        alert(data.message);
+        location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Erro ao excluir roteiro.');
+      }
+    });
+  });
+});
+// ---------------- ENQUETES ----------------
+
+
+
+
+</script>
+
+<style>
+  /* Responsividade adicional sem alterar layout existente */
+  @media (max-width: 768px) {
+    /* Sidebar ocupa a tela toda quando aberta */
+    #sidebar {
+      width: 80%;
+      max-width: 320px;
+    }
+
+    /* Corrige largura do main ao fechar menu */
+    main {
+      margin-left: 0 !important;
+      padding: 1rem;
+    }
+
+    /* Ajustes dos cards e botões */
+    #trip-container .flex,
+    .tab-btns,
+    .tab-content .flex {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+    }
+
+    /* Textos menores no mobile */
+    h2, h3 {
+      font-size: 1rem !important;
+    }
+
+    button, input, select, textarea {
+      font-size: 0.9rem !important;
+    }
+
+    /* Espaçamento nos botões */
+    .tab-btn {
+      flex: 1 1 45%;
+      text-align: center;
+    }
+
+    /* Modal de gastos responsivo */
+    #modal-gasto > div {
+      width: 90%;
+      max-width: 400px;
+    }
+
+    /* Cards e listas */
+    #dias-container > div,
+    #lista-gastos > div,
+    #lista-enquetes > div,
+    #lista-tarefas > div {
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 8px;
+    }
+
+    /* Ajuste para grid de inputs */
+    #form-roteiro .grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  @media (max-width: 480px) {
+    body {
+      font-size: 0.9rem;
+    }
+
+    .rounded-2xl {
+      border-radius: 1rem !important;
+    }
+
+    #trip-container h2 {
+      font-size: 1.1rem !important;
+    }
+
+    #trip-container p {
+      font-size: 0.9rem !important;
+    }
+
+    button {
+      padding: 0.5rem 0.8rem !important;
+    }
+  }
+</style>
+
+</body>
+</html>
