@@ -55,7 +55,8 @@ soupsieve==2.6
 sympy==1.13.1
 tokenizers==0.21.1
 
-torch==2.2.2 --index-url https://download.pytorch.org/whl/cpu
+torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+
 
 tqdm==4.67.1
 transformers==4.50.1
@@ -64,3 +65,4 @@ typing_extensions==4.12.2
 tzdata==2025.2
 urllib3==2.3.0
 Werkzeug==3.0.4
+
