@@ -8,9 +8,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # Define o caminho absoluto da pasta atual
 base_dir = os.path.abspath(os.path.dirname(__file__))
-# Caminhos absolutos para templates e static
 template_dir = os.path.join(base_dir, "templates")
 static_dir = os.path.join(base_dir, "static")
+
 
 app = Flask(
     __name__,
