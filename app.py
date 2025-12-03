@@ -19,10 +19,10 @@ app.secret_key = "sua_chave_secreta"
 
 # Configuração do banco de dados
 db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "12345678",
-    "database": "viagens_colegas"
+    "host": "abc123.mysql.render.com",
+    "user": "admin",
+    "password": "senha_super_segura",
+    "database": "sistema_viagem"
 }
 
 def get_db_connection():
@@ -912,3 +912,4 @@ def get_dashboard_totals(room_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
