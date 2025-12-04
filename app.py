@@ -185,7 +185,105 @@ def dashboard():
         enquetes_abertas=enquetes_abertas_count,
         total_gastos=total_gastos
     )
+# Criar sala
+@app.route("/criar_sala", methods=["POST"])
+@login_required
+def criar_sala():
+    nome = request.form.get("nome")
+    destino = request.form.get("destino")
+    data_inicio = request.form.get("data_inicio")
+    data_fim = request.form.get("data_fim")
+    budget = request.form.get("budget")
+    descricao = request.form.get("descricao")
+
+    # Gerar código único da sala
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            INSERT INTO rooms (id_criador, name, destination, start_date, end_date, budget, description, code)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+        """, (session["user_id"], nome, destino, data_inicio, data_fim, budget, descricao, code))
+
+        room_id = cursor.fetchone()[0]
+
+        # Criador entra automaticamente
+        cursor.execute("""
+            INSERT INTO user_rooms (user_id, room_id)
+            VALUES (%s, %s)
+        """, (session["user_id"], room_id))
+
+        conn.commit()
+
+        flash(f"Sala criada com sucesso! Código: {code}", "success")
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao criar sala:", e)
+        flash("Erro ao criar sala.", "error")
+        return redirect(url_for("dashboard"))
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Entrar em sala via código
+@app.route("/entrar_sala", methods=["POST"])
+@login_required
+def entrar_sala():
+    codigo = request.form.get("codigo")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Verificar se o código existe
+        cursor.execute("SELECT id FROM rooms WHERE code = %s", (codigo,))
+        sala = cursor.fetchone()
+
+        if not sala:
+            flash("Código não encontrado!", "error")
+            return redirect(url_for("dashboard"))
+
+        room_id = sala[0]
+
+        # Verificar se o usuário já está na sala
+        cursor.execute("""
+            SELECT 1 FROM user_rooms
+            WHERE user_id = %s AND room_id = %s
+        """, (session["user_id"], room_id))
+
+        if cursor.fetchone():
+            flash("Você já está nesta sala!", "info")
+            return redirect(url_for("dashboard"))
+
+        # Inserir usuário
+        cursor.execute("""
+            INSERT INTO user_rooms (user_id, room_id)
+            VALUES (%s, %s)
+        """, (session["user_id"], room_id))
+
+        conn.commit()
+        flash("Você entrou na sala com sucesso!", "success")
+        return redirect(url_for("dashboard"))
+
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao entrar na sala:", e)
+        flash("Erro ao entrar na sala.", "error")
+        return redirect(url_for("dashboard"))
+
+    finally:
+        cursor.close()
+        conn.close()
 
 # 🔥 Rodar localmente
 if __name__ == "__main__":
     app.run(debug=True)
+
