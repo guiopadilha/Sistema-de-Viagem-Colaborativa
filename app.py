@@ -1,54 +1,43 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, session
 import os
-# Importação para PostgreSQL
-import psycopg2 
-from urllib.parse import urlparse
-import random
-import string
-import json
+import psycopg2
+import urllib.parse as urlparse
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 
-# Define o caminho absoluto da pasta atual
-base_dir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(__name__)
+app.secret_key = "chave_super_segura_aqui"   # necessário para login/session
 
-# Cria o app apontando templates e static para a mesma pasta
-app = Flask(
-    __name__,
-    template_folder=base_dir,  # templates na mesma pasta
-    static_folder=base_dir     # static também na mesma pasta
-)
-# A chave secreta deve ser lida de uma variável de ambiente em produção
-app.secret_key = os.environ.get("SECRET_KEY", "sua_chave_secreta_default")
 
-# --- CONFIGURAÇÃO DO BANCO DE DADOS POSTGRES ---
-# A função agora lê as variáveis de ambiente (HOST, USER, PASSWORD, etc.) 
-# que você configurou no Render ou tenta usar a DATABASE_URL.
+# ==============================
+# CONEXÃO COM POSTGRESQL (RENDER)
+# ==============================
 def get_db_connection():
-    # Use a DATABASE_URL do Render se estiver disponível
-    db_url = os.environ.get("EXTERNAL_DATABASE_URL") or os.environ.get("INTERNAL_DATABASE_URL")
+    database_url = os.environ.get("DATABASE_URL")
 
-    if db_url:
-        result = urlparse(db_url)
-        # Conexão usando a URL formatada
-        return psycopg2.connect(
-            database=result.path[1:],
-            user=result.username,
-            password=result.password,
-            host=result.hostname,
-            port=result.port
-        )
-    else:
-        # Fallback para configurações separadas (se DATABASE_URL não for usada)
-        return psycopg2.connect(
-            host=os.environ.get("Host", "localhost"), # Lembre-se de atualizar o Host/User/Pass no Render!
-            database=os.environ.get("Database"),
-            user=os.environ.get("User"),
-            password=os.environ.get("Password"),
-            port=os.environ.get("Port", 5432)
-        )
+    if not database_url:
+        raise Exception("DATABASE_URL não configurada no Render!")
 
-# Função auxiliar para pegar dados como dicionário
+    # Render às vezes envia postgres:// → corrigimos para postgresql://
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+
+    # Faz parse da URL
+    url = urlparse.urlparse(database_url)
+
+    conn = psycopg2.connect(
+        database=url.path[1:],     # remove a primeira /
+        user=url.username,
+        password=url.password,
+        host=url.hostname,
+        port=url.port
+    )
+    return conn
+
+
+# ==============================
+# FUNÇÕES AUXILIARES
+# ==============================
 def fetchone_dict(cursor):
     row = cursor.fetchone()
     if row is None:
@@ -60,7 +49,10 @@ def fetchall_dict(cursor):
     columns = [desc[0] for desc in cursor.description]
     return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-# Middleware para proteger rotas
+
+# ==============================
+# MIDDLEWARE DE LOGIN
+# ==============================
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -70,12 +62,17 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Página inicial
+
+# ==============================
+# ROTAS
+# ==============================
+
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# Cadastro
+
+# CADASTRO
 @app.route("/signup", methods=["POST"])
 def signup():
     nome = request.form.get("signup-name")
@@ -94,20 +91,24 @@ def signup():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        # PostgreSQL usa %s como placeholder, igual ao MySQL, mas a exceção muda
+
         cursor.execute(
             "INSERT INTO usuarios (nome, email, senha, telefone) VALUES (%s, %s, %s, %s)",
             (nome, email, senha_hash, telefone)
         )
         conn.commit()
         flash("Cadastro realizado com sucesso!", "success")
-    except psycopg2.errors.UniqueViolation: # Exceção específica do PostgreSQL para violação de chave única
+
+    except psycopg2.errors.UniqueViolation:
         conn.rollback()
         flash("Email já cadastrado!", "error")
+
     except Exception as e:
-        if conn: conn.rollback()
-        print(f"Erro no cadastro: {e}")
-        flash("Erro interno no servidor ao cadastrar.", "error")
+        if conn:
+            conn.rollback()
+        print("Erro no cadastro:", e)
+        flash("Erro interno ao cadastrar.", "error")
+
     finally:
         if conn:
             cursor.close()
@@ -115,17 +116,22 @@ def signup():
 
     return redirect(url_for("index"))
 
-# Login
+
+# LOGIN
 @app.route("/login", methods=["POST"])
 def login():
     email = request.form.get("login-email")
     senha = request.form.get("login-password")
 
     conn = get_db_connection()
-    # No psycopg2, é mais simples usar fetchone_dict para pegar o resultado com nomes
-    cursor = conn.cursor() 
-    cursor.execute("SELECT id_usuario, nome, senha FROM usuarios WHERE email = %s", (email,))
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "SELECT id_usuario, nome, senha FROM usuarios WHERE email = %s",
+        (email,)
+    )
     usuario = fetchone_dict(cursor)
+
     cursor.close()
     conn.close()
 
@@ -134,23 +140,23 @@ def login():
         session["user_name"] = usuario["nome"]
         flash(f"Bem-vindo, {usuario['nome']}!", "success")
         return redirect(url_for("dashboard"))
-    else:
-        flash("Email ou senha incorretos!", "error")
-        return redirect(url_for("index"))
 
-# Dashboard
+    flash("Email ou senha incorretos!", "error")
+    return redirect(url_for("index"))
+
+
+# DASHBOARD
 @app.route("/dashboard")
 @login_required
 def dashboard():
     user_id = session["user_id"]
-    conn = get_db_connection()
-    cursor = conn.cursor() 
 
-    # Viagens criadas pelo usuário
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
     cursor.execute("SELECT * FROM viagens WHERE id_criador = %s", (user_id,))
     viagens = fetchall_dict(cursor)
 
-    # Destinos das viagens
     cursor.execute("""
         SELECT d.* FROM destinos d
         JOIN viagens v ON d.id_destino = v.id_destino
@@ -158,46 +164,34 @@ def dashboard():
     """, (user_id,))
     destinos = fetchall_dict(cursor)
 
-    # Salas em que o usuário participa
     cursor.execute("SELECT room_id FROM user_rooms WHERE user_id = %s", (user_id,))
-    salas_user = [row[0] for row in cursor.fetchall()] # Pega apenas o room_id
+    salas_user = [row[0] for row in cursor.fetchall()]
 
-    tarefas_pendentes_count = 0
-    enquetes_abertas_count = 0
+    tarefas_pendentes = 0
+    enquetes_abertas = 0
     total_gastos = 0
 
     if salas_user:
-        # Usa %s na query e passa a lista salas_user no execute. Psycopg2 trata a lista.
-        placeholders = ",".join(["%s"] * len(salas_user)) 
+        placeholders = ",".join(["%s"] * len(salas_user))
 
-        # Contar tarefas pendentes
-        cursor.execute(f"""
-            SELECT COUNT(*) AS total
-            FROM tarefas
-            WHERE status = 'pendente'
-            AND room_id IN ({placeholders})
-        """, salas_user)
-        tarefas_pendentes_count = cursor.fetchone()[0]
+        cursor.execute(
+            f"SELECT COUNT(*) FROM tarefas WHERE status='pendente' AND room_id IN ({placeholders})",
+            salas_user
+        )
+        tarefas_pendentes = cursor.fetchone()[0]
 
-        # Contar enquetes abertas
-        cursor.execute(f"""
-            SELECT COUNT(*) AS total
-            FROM enquetes
-            WHERE status = 'aberta'
-            AND room_id IN ({placeholders})
-        """, salas_user)
-        enquetes_abertas_count = cursor.fetchone()[0]
+        cursor.execute(
+            f"SELECT COUNT(*) FROM enquetes WHERE status='aberta' AND room_id IN ({placeholders})",
+            salas_user
+        )
+        enquetes_abertas = cursor.fetchone()[0]
 
-        # Somar total de gastos das salas do usuário
-        cursor.execute(f"""
-            SELECT SUM(valor) AS total
-            FROM gastos
-            WHERE room_id IN ({placeholders})
-        """, salas_user)
-
-        result = cursor.fetchone()
-        # COALESCE é mais seguro no SQL para retornar 0, mas garantimos aqui também.
-        total_gastos = float(result[0]) if result and result[0] is not None else 0
+        cursor.execute(
+            f"SELECT SUM(valor) FROM gastos WHERE room_id IN ({placeholders})",
+            salas_user
+        )
+        total = cursor.fetchone()[0]
+        total_gastos = float(total) if total else 0
 
     cursor.close()
     conn.close()
@@ -206,10 +200,11 @@ def dashboard():
         "dashboard.html",
         viagens=viagens,
         destinos=destinos,
-        tarefas_pendentes=tarefas_pendentes_count,
-        enquetes_abertas=enquetes_abertas_count,
+        tarefas_pendentes=tarefas_pendentes,
+        enquetes_abertas=enquetes_abertas,
         total_gastos=total_gastos
     )
+
 
 @app.route("/check_email", methods=["POST"])
 def check_email():
@@ -965,3 +960,4 @@ def get_dashboard_totals(room_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
