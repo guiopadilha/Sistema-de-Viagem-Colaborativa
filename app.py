@@ -4,26 +4,21 @@ import psycopg2
 from urllib.parse import urlparse
 import random
 import string
-import json
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
-import urllib.parse as urlparse
 
-# 🔥 IMPORTANTE: SEM ISSO O FLASK NÃO FUNCIONA
 app = Flask(__name__, template_folder=".")
 app.secret_key = "uma_chave_secreta_qualquer"
 
 def get_db_connection():
     database_url = os.environ.get("DATABASE_URL")
-
     if not database_url:
         raise Exception("DATABASE_URL não configurada no Render!")
 
     if database_url.startswith("postgres://"):
         database_url = database_url.replace("postgres://", "postgresql://", 1)
 
-    url = urlparse.urlparse(database_url)
-
+    url = urlparse(database_url)
     conn = psycopg2.connect(
         database=url.path[1:],
         user=url.username,
@@ -31,7 +26,6 @@ def get_db_connection():
         host=url.hostname,
         port=url.port
     )
-
     return conn
 
 def fetchone_dict(cursor):
@@ -55,12 +49,17 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Página inicial
+# Páginas iniciais
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# Cadastro
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    return render_template("dashboard.html")
+
+# Signup/Login
 @app.route("/signup", methods=["POST"])
 def signup():
     nome = request.form.get("signup-name")
@@ -99,7 +98,6 @@ def signup():
 
     return redirect(url_for("index"))
 
-# Login
 @app.route("/login", methods=["POST"])
 def login():
     email = request.form.get("login-email")
@@ -121,169 +119,133 @@ def login():
         flash("Email ou senha incorretos!", "error")
         return redirect(url_for("index"))
 
-# Dashboard
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    user_id = session["user_id"]
-    conn = get_db_connection()
-    cursor = conn.cursor()
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
-    cursor.execute("SELECT * FROM viagens WHERE id_criador = %s", (user_id,))
-    viagens = fetchall_dict(cursor)
+# ======================
+# Rotas API para AJAX
+# ======================
 
-    cursor.execute("""
-        SELECT d.* FROM destinos d
-        JOIN viagens v ON d.id_destino = v.id_destino
-        WHERE v.id_criador = %s
-    """, (user_id,))
-    destinos = fetchall_dict(cursor)
-
-    cursor.execute("SELECT room_id FROM user_rooms WHERE user_id = %s", (user_id,))
-    salas_user = [row[0] for row in cursor.fetchall()]
-
-    tarefas_pendentes_count = 0
-    enquetes_abertas_count = 0
-    total_gastos = 0
-
-    if salas_user:
-        placeholders = ",".join(["%s"] * len(salas_user))
-
-        cursor.execute(f"""
-            SELECT COUNT(*) AS total
-            FROM tarefas
-            WHERE status = 'pendente'
-            AND room_id IN ({placeholders})
-        """, salas_user)
-        tarefas_pendentes_count = cursor.fetchone()[0]
-
-        cursor.execute(f"""
-            SELECT COUNT(*) AS total
-            FROM enquetes
-            WHERE status = 'aberta'
-            AND room_id IN ({placeholders})
-        """, salas_user)
-        enquetes_abertas_count = cursor.fetchone()[0]
-
-        cursor.execute(f"""
-            SELECT SUM(valor) AS total
-            FROM gastos
-            WHERE room_id IN ({placeholders})
-        """, salas_user)
-
-        result = cursor.fetchone()
-        total_gastos = float(result[0]) if result and result[0] is not None else 0
-
-    cursor.close()
-    conn.close()
-
-    return render_template(
-        "dashboard.html",
-        viagens=viagens,
-        destinos=destinos,
-        tarefas_pendentes=tarefas_pendentes_count,
-        enquetes_abertas=enquetes_abertas_count,
-        total_gastos=total_gastos
-    )
 # Criar sala
-@app.route("/criar_sala", methods=["POST"])
+@app.route("/create_room", methods=["POST"])
 @login_required
-def criar_sala():
-    nome = request.form.get("nome")
-    destino = request.form.get("destino")
-    data_inicio = request.form.get("data_inicio")
-    data_fim = request.form.get("data_fim")
-    budget = request.form.get("budget")
-    descricao = request.form.get("descricao")
+def create_room():
+    data = request.get_json()
+    nome = data.get("name")
+    destino = data.get("destination")
+    data_inicio = data.get("startDate")
+    data_fim = data.get("endDate")
+    budget = data.get("budget")
+    descricao = data.get("description")
 
-    # Gerar código único da sala
     code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
     try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute("""
             INSERT INTO rooms (id_criador, name, destination, start_date, end_date, budget, description, code)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             RETURNING id
         """, (session["user_id"], nome, destino, data_inicio, data_fim, budget, descricao, code))
-
         room_id = cursor.fetchone()[0]
 
         # Criador entra automaticamente
-        cursor.execute("""
-            INSERT INTO user_rooms (user_id, room_id)
-            VALUES (%s, %s)
-        """, (session["user_id"], room_id))
-
+        cursor.execute("INSERT INTO user_rooms (user_id, room_id) VALUES (%s, %s)", (session["user_id"], room_id))
         conn.commit()
-
-        flash(f"Sala criada com sucesso! Código: {code}", "success")
-        return redirect(url_for("dashboard"))
-
+        cursor.close()
+        conn.close()
+        return jsonify(success=True, code=code)
     except Exception as e:
-        conn.rollback()
         print("Erro ao criar sala:", e)
-        flash("Erro ao criar sala.", "error")
-        return redirect(url_for("dashboard"))
+        return jsonify(success=False), 500
 
-    finally:
-        cursor.close()
-        conn.close()
-
-
-# Entrar em sala via código
-@app.route("/entrar_sala", methods=["POST"])
+# Buscar todas as salas do usuário
+@app.route("/get_rooms")
 @login_required
-def entrar_sala():
-    codigo = request.form.get("codigo")
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
+def get_rooms():
     try:
-        # Verificar se o código existe
-        cursor.execute("SELECT id FROM rooms WHERE code = %s", (codigo,))
-        sala = cursor.fetchone()
-
-        if not sala:
-            flash("Código não encontrado!", "error")
-            return redirect(url_for("dashboard"))
-
-        room_id = sala[0]
-
-        # Verificar se o usuário já está na sala
+        conn = get_db_connection()
+        cursor = conn.cursor()
         cursor.execute("""
-            SELECT 1 FROM user_rooms
-            WHERE user_id = %s AND room_id = %s
-        """, (session["user_id"], room_id))
-
-        if cursor.fetchone():
-            flash("Você já está nesta sala!", "info")
-            return redirect(url_for("dashboard"))
-
-        # Inserir usuário
-        cursor.execute("""
-            INSERT INTO user_rooms (user_id, room_id)
-            VALUES (%s, %s)
-        """, (session["user_id"], room_id))
-
-        conn.commit()
-        flash("Você entrou na sala com sucesso!", "success")
-        return redirect(url_for("dashboard"))
-
-    except Exception as e:
-        conn.rollback()
-        print("Erro ao entrar na sala:", e)
-        flash("Erro ao entrar na sala.", "error")
-        return redirect(url_for("dashboard"))
-
-    finally:
+            SELECT r.id, r.name, r.destination, r.start_date, r.end_date, r.budget, r.description, r.code
+            FROM rooms r
+            JOIN user_rooms ur ON r.id = ur.room_id
+            WHERE ur.user_id = %s
+        """, (session["user_id"],))
+        rooms = fetchall_dict(cursor)
         cursor.close()
         conn.close()
+        return jsonify(rooms)
+    except Exception as e:
+        print("Erro ao buscar salas:", e)
+        return jsonify([]), 500
+
+# Buscar sala pelo código
+@app.route("/get_room_by_code")
+@login_required
+def get_room_by_code():
+    code = request.args.get("code")
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM rooms WHERE code = %s", (code,))
+        room = fetchone_dict(cursor)
+        cursor.close()
+        conn.close()
+        if room:
+            return jsonify(success=True, room=room)
+        else:
+            return jsonify(success=False, error="Código não encontrado")
+    except Exception as e:
+        print("Erro get_room_by_code:", e)
+        return jsonify(success=False, error="Erro interno"), 500
+
+# Entrar em sala
+@app.route("/join_room", methods=["POST"])
+@login_required
+def join_room():
+    data = request.get_json()
+    room_id = data.get("room_id")
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Verifica se já está na sala
+        cursor.execute("SELECT 1 FROM user_rooms WHERE user_id=%s AND room_id=%s", (session["user_id"], room_id))
+        if not cursor.fetchone():
+            cursor.execute("INSERT INTO user_rooms (user_id, room_id) VALUES (%s, %s)", (session["user_id"], room_id))
+            conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify(success=True)
+    except Exception as e:
+        print("Erro join_room:", e)
+        return jsonify(success=False, error="Erro ao entrar na sala"), 500
+
+# Deletar sala
+@app.route("/delete_room", methods=["POST"])
+@login_required
+def delete_room():
+    data = request.get_json()
+    code = data.get("code")
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        # Apaga relacionamento do usuário
+        cursor.execute("""
+            DELETE FROM user_rooms
+            WHERE room_id = (SELECT id FROM rooms WHERE code=%s) AND user_id=%s
+        """, (code, session["user_id"]))
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return jsonify(success=True)
+    except Exception as e:
+        print("Erro delete_room:", e)
+        return jsonify(success=False, error="Erro ao deletar sala"), 500
 
 # 🔥 Rodar localmente
 if __name__ == "__main__":
     app.run(debug=True)
-
