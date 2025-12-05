@@ -240,6 +240,41 @@ def criar_sala():
         cursor.close()
         conn.close()
 
+# API para carregar salas do usuário no dashboard
+@app.route("/get_rooms")
+@login_required
+def get_rooms():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Buscar IDs das salas onde o usuário participa
+        cursor.execute("SELECT room_id FROM user_rooms WHERE user_id = %s", (session["user_id"],))
+        salas_ids = [row[0] for row in cursor.fetchall()]
+
+        if not salas_ids:
+            return jsonify({"success": True, "rooms": []})
+
+        placeholders = ",".join(["%s"] * len(salas_ids))
+
+        # Buscar detalhes das salas
+        cursor.execute(f"""
+            SELECT id, name, destination, start_date, end_date, budget, description, code
+            FROM rooms
+            WHERE id IN ({placeholders})
+        """, salas_ids)
+
+        salas = fetchall_dict(cursor)
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "rooms": salas})
+
+    except Exception as e:
+        print("ERRO /get_rooms:", e)
+        return jsonify({"success": False, "error": "Erro ao carregar salas do servidor"})
+
 
 # Entrar em sala via código
 @app.route("/entrar_sala", methods=["POST"])
@@ -294,3 +329,4 @@ def entrar_sala():
 # 🔥 Rodar localmente
 if __name__ == "__main__":
     app.run(debug=True)
+
