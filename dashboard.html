@@ -497,9 +497,24 @@
     getRoomsArray: ()=>rooms
   };
 })();
+
+  function showSection(sectionId) {
+  document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
+  document.getElementById(sectionId).classList.remove("hidden");
+
+  // Ajusta destaque do menu lateral
+  document.querySelectorAll("aside nav button").forEach(b => b.classList.remove("bg-blue-50", "text-blue-600"));
+  document.getElementById("btn-" + sectionId).classList.add("bg-blue-50", "text-blue-600");
+
+  // 🔥 SE ENTROU EM MINHAS SALAS → CARREGA AS SALAS
+  if (sectionId === "salas") {
+    loadRooms();
+  }
+}
 </script>
 
 
 </body>
 
 </html>
+
