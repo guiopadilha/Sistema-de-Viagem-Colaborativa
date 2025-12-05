@@ -240,41 +240,118 @@ def criar_sala():
         cursor.close()
         conn.close()
 
-# API para carregar salas do usuário no dashboard
-@app.route("/get_rooms")
-@login_required
+@app.route('/get_rooms')
 def get_rooms():
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
+    if 'user_id' not in session:
+        return jsonify([])
 
-        # Buscar IDs das salas onde o usuário participa
-        cursor.execute("SELECT room_id FROM user_rooms WHERE user_id = %s", (session["user_id"],))
-        salas_ids = [row[0] for row in cursor.fetchall()]
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-        if not salas_ids:
-            return jsonify({"success": True, "rooms": []})
+    cur.execute("""
+        SELECT r.id, r.name, r.destination, r.start_date, r.end_date, 
+               r.budget, r.description, r.code
+        FROM rooms r
+        JOIN user_rooms ur ON ur.room_id = r.id
+        WHERE ur.user_id = %s
+    """, (session['user_id'],))
 
-        placeholders = ",".join(["%s"] * len(salas_ids))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
 
-        # Buscar detalhes das salas
-        cursor.execute(f"""
-            SELECT id, name, destination, start_date, end_date, budget, description, code
-            FROM rooms
-            WHERE id IN ({placeholders})
-        """, salas_ids)
+    rooms = []
+    for row in rows:
+        rooms.append({
+            "id": row[0],
+            "name": row[1],
+            "destination": row[2],
+            "startDate": str(row[3]),
+            "endDate": str(row[4]),
+            "budget": float(row[5]),
+            "description": row[6],
+            "code": row[7]
+        })
 
-        salas = fetchall_dict(cursor)
+    return jsonify(rooms)
+@app.route('/create_room', methods=['POST'])
+def create_room():
+    data = request.json
+    name = data['name']
+    destination = data['destination']
+    start_date = data['startDate']
+    end_date = data['endDate']
+    budget = data['budget']
+    description = data['description']
 
-        cursor.close()
-        conn.close()
+    code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
 
-        return jsonify({"success": True, "rooms": salas})
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    except Exception as e:
-        print("ERRO /get_rooms:", e)
-        return jsonify({"success": False, "error": "Erro ao carregar salas do servidor"})
+    cur.execute("""
+        INSERT INTO rooms (name, destination, start_date, end_date, budget, description, code, owner_id)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        RETURNING id
+    """, (name, destination, start_date, end_date, budget, description, code, session['user_id']))
 
+    room_id = cur.fetchone()[0]
+
+    cur.execute("""
+        INSERT INTO user_rooms (user_id, room_id)
+        VALUES (%s, %s)
+    """, (session['user_id'], room_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True, "code": code})
+@app.route('/get_room_by_code')
+def get_room_by_code():
+    code = request.args.get('code')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, name FROM rooms WHERE code = %s
+    """, (code,))
+
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if row:
+        return jsonify({"success": True, "room": {"id": row[0], "name": row[1]}})
+    else:
+        return jsonify({"success": False})
+@app.route('/join_room', methods=['POST'])
+def join_room():
+    data = request.json
+    room_id = data['room_id']
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT 1 FROM user_rooms WHERE user_id = %s AND room_id = %s
+    """, (session['user_id'], room_id))
+
+    if cur.fetchone():
+        return jsonify({"success": False, "error": "Você já está nessa sala."})
+
+    cur.execute("""
+        INSERT INTO user_rooms (user_id, room_id)
+        VALUES (%s, %s)
+    """, (session['user_id'], room_id))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True})
 
 # Entrar em sala via código
 @app.route("/entrar_sala", methods=["POST"])
@@ -329,4 +406,5 @@ def entrar_sala():
 # 🔥 Rodar localmente
 if __name__ == "__main__":
     app.run(debug=True)
+
 
