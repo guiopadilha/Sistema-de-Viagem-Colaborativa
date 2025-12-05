@@ -241,357 +241,265 @@
   </div>
 
   <!-- SCRIPTS -->
-  <script>
-    
-    const user = { name: "Viajante", email: "viajante@example.com" };
-    let rooms = [];
+<script>
+/*
+  Script consolidado para dashboard — substitua todo o script antigo por este.
+  Logs úteis incluídos para depuração. loadRooms() só roda uma vez.
+*/
 
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('overlay').classList.toggle('hidden'); }
+(function() {
+  // --- configuração inicial ---
+  const user = { name: "Viajante", email: "viajante@example.com" };
+  let rooms = [];
+  let roomsLoaded = false; // evita double-run
 
-    function showSection(section) {
-      document.getElementById('dashboard').classList.add('hidden');
-      document.getElementById('salas').classList.add('hidden');
-      document.getElementById(section).classList.remove('hidden');
+  // --- helpers de UI ---
+  function $(id){ return document.getElementById(id); }
+  function toggleSidebar(){ $('sidebar').classList.toggle('-translate-x-full'); $('overlay').classList.toggle('hidden'); }
+  function openCreateModal(){ $('modal-create').classList.remove('hidden'); }
+  function closeCreateModal(){ $('modal-create').classList.add('hidden'); }
+  function openEnterModal(){ $('modal-enter').classList.remove('hidden'); }
+  function closeEnterModal(){ $('modal-enter').classList.add('hidden'); }
 
-      document.getElementById('btn-dashboard').classList.remove('bg-blue-50','text-blue-600'); document.getElementById('btn-dashboard').classList.add('text-gray-700');
-      document.getElementById('btn-salas').classList.remove('bg-blue-50','text-blue-600'); document.getElementById('btn-salas').classList.add('text-gray-700');
-      if(section==='dashboard'){document.getElementById('btn-dashboard').classList.add('bg-blue-50','text-blue-600');}
-      if(section==='salas'){document.getElementById('btn-salas').classList.add('bg-blue-50','text-blue-600');}
-    }
+  // --- renderizações ---
+  function renderRooms(){
+    const roomsContainer = $('rooms-container'), noRooms = $('no-rooms-message');
+    roomsContainer.innerHTML = '';
 
-    document.getElementById('userName').textContent = user.name;
-    document.getElementById('sidebarUserName').textContent = user.name;
-    document.getElementById('userInitial').textContent = user.name.charAt(0).toUpperCase();
-
-   
-    function logout() {
-    alert('Logout realizado');  // mensagem opcional
-    window.location.href = '/'; // rota Flask que serve index.html
-}
-
-
-    function openCreateModal(){document.getElementById('modal-create').classList.remove('hidden');}
-    function closeCreateModal(){document.getElementById('modal-create').classList.add('hidden');}
-    function openEnterModal(){document.getElementById('modal-enter').classList.remove('hidden');}
-    function closeEnterModal(){document.getElementById('modal-enter').classList.add('hidden');}
-
-    function renderRooms() {
-      const roomsContainer = document.getElementById('rooms-container');
-      const noRoomsMessage = document.getElementById('no-rooms-message');
-      roomsContainer.innerHTML = '';
-
-      if(rooms.length === 0){ noRoomsMessage.classList.remove('hidden'); }
-      else{
-        noRoomsMessage.classList.add('hidden');
-        rooms.forEach((room, index) => {
-          const roomCard = document.createElement('div');
-          roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
-          roomCard.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-              <h3 class="font-semibold text-gray-800 room-name">${room.name}</h3>
-              <button class="text-gray-400 hover:text-red-500 delete-room" onclick="deleteRoom(${index})">
-                <i class="fas fa-times"></i>
-              </button>
-            </div>
-            <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
-            <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
-            <p class="text-gray-600 mb-1 room-dates">📅 ${room.startDate} - ${room.endDate}</p>
-            <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
-              Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
-            </div>
-            <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
-              Entrar na Sala
+    if(!rooms || rooms.length === 0){
+      noRooms.classList.remove('hidden');
+    } else {
+      noRooms.classList.add('hidden');
+      rooms.forEach((room, index) => {
+        const card = document.createElement('div');
+        card.className = 'bg-white p-6 rounded-lg shadow room-card';
+        const startDate = room.start_date || room.startDate || '—';
+        const endDate = room.end_date || room.endDate || '—';
+        const budget = room.budget != null ? Number(room.budget).toLocaleString('pt-BR') : '—';
+        card.innerHTML = `
+          <div class="flex justify-between items-start mb-2">
+            <h3 class="font-semibold text-gray-800 room-name">${room.name || 'Sala'}</h3>
+            <button class="text-gray-400 hover:text-red-500" data-delete-index="${index}">
+              <i class="fas fa-times"></i>
             </button>
-          `;
-
-          roomCard.querySelector('.enter-room').addEventListener('click', () => {
-            window.location.href = 'sala.html';
-          });
-
-          roomsContainer.appendChild(roomCard);
-        });
-      }
-      document.getElementById('active-rooms-count').textContent = rooms.length;
-    }
-
-    function deleteRoom(index){rooms.splice(index,1); renderRooms();}
-
-    // 🔥 Parte modificada
- // Criar sala
-document.getElementById('create-room-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const form = e.target;
-  const name = form[0].value;
-  const destination = form[1].value;
-  const startDate = form[2].value;
-  const endDate = form[3].value;
-  const budget = parseFloat(form[4].value);
-  const description = form[5].value;
-
-  try {
-    const response = await fetch("/create_room", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, destination, startDate, endDate, budget, description })
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      // Atualiza todas as salas do usuário a partir do banco
-      await loadRooms();
-      closeCreateModal();
-      form.reset();
-      alert(`Sala "${name}" criada com sucesso!\nCódigo: ${data.code}`);
-    } else {
-      alert("Erro ao criar sala.");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("Erro de conexão com o servidor.");
-  }
-});
-
-// Entrar com código
-document.getElementById('enter-room-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const code = document.getElementById('invite-code').value.trim().toUpperCase();
-
-  try {
-    const response = await fetch(`/get_room_by_code?code=${code}`);
-    const data = await response.json();
-
-    if (data.success) {
-      // envia para backend salvar em user_rooms
-      const joinResp = await fetch('/join_room', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room_id: data.room.id })
-      });
-      const joinData = await joinResp.json();
-      if (joinData.success) {
-        // Atualiza todas as salas do usuário a partir do banco
-        await loadRooms();
-        closeEnterModal();
-        alert(`Sala "${data.room.name}" adicionada ao seu dashboard!`);
-      } else {
-        alert(joinData.error || 'Erro ao entrar na sala');
-      }
-    } else {
-      alert('Código inválido ou sala não encontrada.');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Entrando na sala');
-  }
-});
-
-// Carregar todas as salas do usuário
-async function loadRooms() {
-  try {
-    const response = await fetch("/get_rooms"); // backend retorna todas as salas do usuário
-    rooms = await response.json();
-    renderRooms();
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar salas do servidor.");
-  }
-}
-
-
-  document.getElementById('enter-room-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const code = document.getElementById('invite-code').value.trim().toUpperCase();
-
-  try {
-    const response = await fetch(`/get_room_by_code?code=${code}`);
-    const data = await response.json();
-
-    if (data.success) {
-      // Verifica se a sala já existe localmente
-      const exists = rooms.some(r => r.code === data.room.code);
-      if (!exists) {
-        // Adiciona a sala ao array
-        rooms.push(data.room);
-        // Atualiza os cards no dashboard e "Minhas Salas"
-        renderRooms();
-      }
-      closeEnterModal();
-      alert(`Sala "${data.room.name}" adicionada ao seu dashboard!`);
-    } else {
-      alert(data.error || 'Código inválido ou sala não encontrada.');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('Erro');
-  }
-});
-
-
-    renderRooms();
-    async function loadRooms() {
-  try {
-    const response = await fetch("/get_rooms");
-    rooms = await response.json();
-    renderRooms();
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar salas do servidor.");
-  }
-}
-
-// Chama ao abrir a página
-loadRooms();
-function renderTrips() {
-  const tripsContainer = document.getElementById('trips-container');
-  tripsContainer.innerHTML = ''; // limpa o container
-
-  rooms.forEach(room => {
-    const tripCard = document.createElement('div');
-    tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
-    tripCard.innerHTML = `
-      <div>
-        <h4 class="font-medium text-gray-800">${room.name}</h4>
-        <p class="text-sm text-gray-500">📍 ${room.destination} &nbsp; 📅 ${room.startDate}</p>
-      </div>
-      <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
-    `;
-    tripsContainer.appendChild(tripCard);
-  });
-}
-function renderRooms() {
-  const roomsContainer = document.getElementById('rooms-container');
-  const noRoomsMessage = document.getElementById('no-rooms-message');
-  roomsContainer.innerHTML = '';
-
-  if(rooms.length === 0){
-    noRoomsMessage.classList.remove('hidden');
-  } else {
-    noRoomsMessage.classList.add('hidden');
-    rooms.forEach((room, index) => {
-      const roomCard = document.createElement('div');
-      roomCard.className = 'bg-white p-6 rounded-lg shadow room-card';
-      roomCard.innerHTML = `
-        <div class="flex justify-between items-start mb-2">
-          <h3 class="font-semibold text-gray-800 room-name">${room.name}</h3>
-          <button class="text-gray-400 hover:text-red-500 delete-room" onclick="deleteRoom(${index})">
-            <i class="fas fa-times"></i>
+          </div>
+          <p class="text-gray-600 mb-1">📍 ${room.destination || '—'}</p>
+          <p class="text-gray-600 mb-1">🔑 Código: <span class="font-mono text-blue-600">${room.code || '—'}</span></p>
+          <p class="text-gray-600 mb-1">📅 ${formatDate(startDate)} - ${formatDate(endDate)}</p>
+          <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm">Orçamento: R$ ${budget}</div>
+          <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room" data-room-id="${room.id || room.room_id}">
+            Entrar na Sala
           </button>
-        </div>
-        <p class="text-gray-600 mb-1 room-destination">📍 ${room.destination}</p>
-        <p class="text-gray-600 mb-1 room-code">🔑 Código: <span class="font-mono text-blue-600">${room.code}</span></p>
-        <p class="text-gray-600 mb-1 room-dates">
-  📅 ${formatDate(room.start_date || room.startDate)} - ${formatDate(room.end_date || room.endDate)}
-</p>
-<!-- aqui -->
-        <div class="bg-green-50 text-green-700 p-2 rounded-md mb-3 text-sm room-budget">
-          Orçamento: R$ ${room.budget.toLocaleString('pt-BR')}
-        </div>
-        <button class="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-md enter-room">
-          Entrar na Sala
-        </button>
-      `;
-      roomCard.querySelector('.enter-room').addEventListener('click', () => {
-  const roomId = room.id || room.room_id; // tenta ambos os nomes
-  window.location.href = `/sala/${roomId}`;
-});
+        `;
+        roomsContainer.appendChild(card);
+      });
+      // delegação de eventos para delete/enter
+      roomsContainer.querySelectorAll('[data-delete-index]').forEach(btn=>{
+        btn.onclick = e => {
+          const idx = Number(btn.getAttribute('data-delete-index'));
+          if(!confirm(`Excluir a sala "${rooms[idx].name}"?`)) return;
+          deleteRoomByCode(rooms[idx].code).then(ok=>{
+            if(ok){ rooms.splice(idx,1); renderRooms(); }
+          });
+        };
+      });
+      roomsContainer.querySelectorAll('.enter-room').forEach(btn=>{
+        btn.onclick = e => {
+          const id = btn.getAttribute('data-room-id');
+          window.location.href = `/sala/${id}`;
+        };
+      });
+    }
+    $('active-rooms-count').textContent = rooms.length || 0;
+    renderTrips();
+  }
 
-      roomsContainer.appendChild(roomCard);
+  function formatDate(dateStr){
+    if(!dateStr) return '—';
+    const d = new Date(dateStr);
+    if(isNaN(d)) return dateStr;
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+  }
+
+  function renderTrips(){
+    const tripsContainer = $('trips-container');
+    tripsContainer.innerHTML = '';
+    rooms.forEach(room=>{
+      const start = room.start_date || room.startDate || '—';
+      const end = room.end_date || room.endDate || '—';
+      const card = document.createElement('div');
+      card.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
+      card.innerHTML = `
+        <div>
+          <h4 class="font-medium text-gray-800">${room.name || 'Sala'}</h4>
+          <p class="text-sm text-gray-500">📍 ${room.destination || '—'} &nbsp; 📅 ${formatDate(start)}</p>
+        </div>
+        <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
+      `;
+      tripsContainer.appendChild(card);
     });
   }
 
-  document.getElementById('active-rooms-count').textContent = rooms.length;
-  
-  // 🔥 Atualiza o dashboard de próximas viagens
-  renderTrips();
-  
-}
-
-
-function deleteRoom(index) {
-  const room = rooms[index];
-  if (!room) return;
-
-  if (!confirm(`Excluir a sala "${room.name}"? Esta ação não pode ser desfeita.`)) return;
-
-  // envia pedido para o servidor apagar a sala permanentemente
-  fetch("/delete_room", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ code: room.code })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      // remove localmente e atualiza a UI
-      rooms.splice(index, 1);
-      renderRooms();
-    } else {
-      alert(data.error || "Erro ao apagar a sala no servidor.");
-      console.error("delete_room erro:", data);
+  // --- chamadas ao servidor ---
+  async function loadRooms(){
+    if(roomsLoaded){
+      console.log('loadRooms: já foi chamado — pulando segunda execução');
+      return;
     }
-  })
-  .catch(err => {
-    console.error("Erro ao chamar /delete_room:", err);
-    alert("Erro de conexão ao excluir a sala.");
-  });
-}
-function formatDate(dateStr) {
-  if (!dateStr) return "—"; // mostra traço se a data estiver vazia
-  const d = new Date(dateStr);
-  if (isNaN(d)) return dateStr; // se for texto (tipo '10/09/2025'), mostra como está
-  return `${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}/${d.getFullYear()}`;
-}
-function renderTrips() {
-  const tripsContainer = document.getElementById('trips-container');
-  tripsContainer.innerHTML = '';
-
-  rooms.forEach(room => {
-    const start = room.start_date || room.startDate;
-    const end = room.end_date || room.endDate;
-    const formattedStart = formatDate(start);
-    const formattedEnd = formatDate(end);
-
-    const tripCard = document.createElement('div');
-    tripCard.className = 'flex flex-wrap justify-between items-center border-t pt-4 mb-4 trip-card';
-    tripCard.innerHTML = `
-      <div>
-        <h4 class="font-medium text-gray-800">${room.name}</h4>
-        <p class="text-sm text-gray-500">
-          📍 ${room.destination} &nbsp; 📅 ${formattedStart} - ${formattedEnd}
-        </p>
-      </div>
-      <span class="mt-2 md:mt-0 bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm">Planejando</span>
-    `;
-    tripsContainer.appendChild(tripCard);
-  });
-}
-function atualizarContadorViagens() {
-  // conta quantos trip-card existem dentro do container
-  const totalViagens = document.querySelectorAll('#trips-container .trip-card').length;
-  // atualiza o número no span do dashboard
-  document.getElementById('active-rooms-count').textContent = totalViagens;
-}
-
-// chama depois de renderizar as viagens
-renderTrips(); // sua função que cria os cards
-atualizarContadorViagens();
-async function loadRooms() {
-  try {
-    const response = await fetch("/get_rooms");
-    const data = await response.json();
-    rooms = data;  // substitui o array local pelo que vem do banco
-    renderRooms();
-  } catch (err) {
-    console.error(err);
-    alert("Erro ao carregar salas do servidor.");
+    roomsLoaded = true; // marca imediatamente para bloquear reentrância
+    console.log('loadRooms: iniciando fetch /get_rooms');
+    try{
+      const resp = await fetch('/get_rooms');
+      if(!resp.ok){
+        console.error('loadRooms: resposta não OK', resp.status);
+        alert('Erro ao carregar salas do servidor.');
+        return;
+      }
+      const data = await resp.json();
+      if(data.success){
+        // compatibiliza formatos
+        rooms = Array.isArray(data.rooms) ? data.rooms.map(r=>{
+          // transforma keys possíveis para um único padrão esperado no front
+          return {
+            id: r.id || r.room_id || r.id_room,
+            name: r.name || r.titulo || r.title,
+            destination: r.destination || r.destino,
+            start_date: r.start_date || r.startDate,
+            end_date: r.end_date || r.endDate,
+            budget: r.budget || r.orcamento || r.budget,
+            description: r.description || r.descricao,
+            code: r.code || r.codigo
+          };
+        }) : [];
+        console.log('loadRooms: salas carregadas', rooms.length);
+        renderRooms();
+      } else {
+        console.error('loadRooms: erro do servidor', data);
+        alert(data.error || 'Erro ao carregar salas do servidor.');
+      }
+    } catch(err){
+      console.error('loadRooms catch:', err);
+      alert('Erro ao carregar salas do servidor.');
+    }
   }
-}
 
-// Chama ao abrir a página
-loadRooms();
+  async function deleteRoomByCode(code){
+    try{
+      const resp = await fetch('/delete_room', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({code})
+      });
+      const data = await resp.json();
+      if(data.success) return true;
+      alert(data.error || 'Erro ao apagar sala no servidor.');
+      return false;
+    } catch(e){
+      console.error('deleteRoomByCode', e);
+      alert('Erro de conexão ao excluir a sala.');
+      return false;
+    }
+  }
 
+  // criar sala (form)
+  (function bindCreateForm(){
+    const form = $('create-room-form');
+    if(!form) return;
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const f = e.target;
+      const payload = {
+        name: f[0].value,
+        destination: f[1].value,
+        startDate: f[2].value,
+        endDate: f[3].value,
+        budget: parseFloat(f[4].value),
+        description: f[5].value
+      };
+      try {
+        const resp = await fetch('/create_room', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json();
+        if(data.success){
+          // força recarregar salas do servidor (permitindo nova fetch)
+          roomsLoaded = false;
+          await loadRooms();
+          closeCreateModal();
+          form.reset();
+          alert(`Sala "${payload.name}" criada! Código: ${data.code || '—'}`);
+        } else {
+          alert(data.error || 'Erro ao criar sala.');
+        }
+      } catch(err){
+        console.error('create-room error', err);
+        alert('Erro de conexão com o servidor.');
+      }
+    });
+  })();
 
-  </script>
+  // entrar por código (opcional) — se você quer manter essa função
+  (function bindEnterForm(){
+    const form = $('enter-room-form');
+    if(!form) return;
+    form.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const code = $('invite-code').value.trim().toUpperCase();
+      try{
+        const resp = await fetch(`/get_room_by_code?code=${encodeURIComponent(code)}`);
+        const data = await resp.json();
+        if(!data.success){ alert(data.error || 'Código inválido ou sala não encontrada.'); return; }
+        // junta no servidor
+        const join = await fetch('/join_room', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({room_id: data.room.id})
+        });
+        const joinData = await join.json();
+        if(joinData.success){
+          roomsLoaded = false;
+          await loadRooms();
+          closeEnterModal();
+          alert(`Sala "${data.room.name}" adicionada ao seu dashboard!`);
+        } else {
+          alert(joinData.error || 'Erro ao entrar na sala');
+        }
+      } catch(err){ console.error('enter-room error', err); alert('Erro'); }
+    });
+  })();
+
+  // evita múltiplas execuções por acidente: registra uma só vez o DOMContentLoaded
+  function initOnce(){
+    // preenche nome do usuário (se quiser usar session do Jinja, troque pela variável renderizada)
+    if($('userName')) $('userName').textContent = user.name;
+    if($('sidebarUserName')) $('sidebarUserName').textContent = user.name;
+    if($('userInitial')) $('userInitial').textContent = user.name.charAt(0).toUpperCase();
+
+    // registra handlers básicos de UI que não devem duplicar
+    if($('overlay')) $('overlay').onclick = toggleSidebar;
+
+    // por fim carrega salas
+    loadRooms();
+  }
+
+  // Se já estiver carregado o DOM, chama direto; senão, espera
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initOnce, {once:true});
+  } else {
+    initOnce();
+  }
+
+  // export minimal para console debug (opcional)
+  window._TT = {
+    reloadRooms: ()=>{ roomsLoaded=false; return loadRooms(); },
+    getRoomsArray: ()=>rooms
+  };
+})();
+</script>
+
 
 </body>
+
 </html>
